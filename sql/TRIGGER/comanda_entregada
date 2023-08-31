@@ -1,0 +1,16 @@
+CREATE trigger [dbo].[comanda_entregada]
+  on [dbo].[Comandas]
+  for update
+  as
+   begin 
+   if update(FecEntregado)
+   begin
+   DECLARE @id int;
+   SET @id=(SELECT id FROM inserted)
+
+    INSERT INTO Comandas_hist ([id], [nropos], [centroEmisor], [nroDocumento], [fecdocumento], [fecproceso], [turno], [jsonComanda], [estado], [fecPendiente], [fecAtencion], [fecPorEntregar], [fecEntregado])
+  SELECT [id], [nropos], [centroEmisor], [nroDocumento], [fecdocumento], [fecproceso], [turno], [jsonComanda], [estado], [fecPendiente], [fecAtencion], [fecPorEntregar], [fecEntregado]
+  FROM INSERTED;
+  DELETE Comandas WHERE id= @id;
+   end
+   end
