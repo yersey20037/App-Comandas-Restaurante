@@ -6,6 +6,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv1"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="5dp"
+        android:background="#CDCDCD"
+        android:focusable="true"
+        android:descendantFocusability="afterDescendants"
+        android:focusableInTouchMode="true"
+        android:orientation="horizontal"
+
+        app:layout_constraintBottom_toTopOf="@+id/estados"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textcomandassiges">
+    </androidx.recyclerview.widget.RecyclerView>
     <TextView
         android:id="@+id/textcomandassiges"
         android:layout_width="0dp"
@@ -22,15 +40,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/comandas"/>
+        app:layout_constraintBottom_toTopOf="@id/rv1"/>
     <ImageButton
         android:id="@+id/btnreload"
         android:layout_width="50dp"
         android:layout_height="50dp"
-
         android:onClick="recargarconboton"
         android:scaleType="centerInside"
-        app:layout_constraintBottom_toTopOf="@id/comandas"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
         app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
         app:layout_constraintStart_toStartOf="@id/textcomandassiges"
         app:layout_constraintTop_toTopOf="parent"
@@ -49,42 +66,19 @@
         app:layout_constraintTop_toTopOf="@id/textcomandassiges"
         app:layout_constraintHorizontal_bias="0"
         app:srcCompat="@drawable/pngaaa_com_371772" />
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/comandas"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="5dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/estados"
-        app:layout_constraintTop_toBottomOf="@+id/textcomandassiges">
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:background="#CDCDCD"
-            app:layout_constraintEnd_toStartOf="@id/textViewDetalle"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="parent"
-            app:layout_constraintBottom_toTopOf="parent">
-        </androidx.recyclerview.widget.RecyclerView>
-        <TextView
-            android:id="@+id/textViewDetalle"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:scrollbars="horizontal"
-            android:background="#CDCDCD"
-            android:textColor="@color/black"
-            android:textSize="13sp"
-            app:layout_constraintTop_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/rv1"
-            app:layout_constraintBottom_toTopOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <ImageButton
+        android:id="@+id/btncolor"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:onClick="recargarconboton"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
+        app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
+        app:layout_constraintStart_toEndOf="@id/btnconfig"
+        app:layout_constraintTop_toTopOf="@id/textcomandassiges"
+        app:layout_constraintHorizontal_bias="0"
+        app:srcCompat="@drawable/painting"
+        />
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -95,7 +89,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/empresa"
-        app:layout_constraintTop_toBottomOf="@+id/comandas">
+        app:layout_constraintTop_toBottomOf="@+id/rv1">
         <TextView
             android:id="@+id/pendiente"
             android:layout_width="0dp"
@@ -151,7 +145,7 @@
     <TextView
         android:id="@+id/empresa"
         android:layout_width="0dp"
-        android:layout_height="20dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:layout_marginEnd="5dp"
         android:layout_marginTop="5dp"

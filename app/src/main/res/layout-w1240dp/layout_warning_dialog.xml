@@ -31,7 +31,7 @@
             android:layout_height="50dp"
             android:layout_marginEnd="10dp"
             android:contentDescription="Custom Dialogs"
-            android:tint="@color/colorWhite"
+            app:tint="@color/colorWhite"
             app:layout_constraintBottom_toBottomOf="@+id/textTitle"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/textTitle" />
@@ -57,13 +57,15 @@
         android:layout_height="80dp"
         android:layout_marginStart="40dp"
         android:layout_marginEnd="10dp"
-        android:background="@drawable/button_warning_background"
+
         android:textColor="@color/colorWhite"
         android:textSize="48sp"
         app:layout_constraintBottom_toBottomOf="@+id/layoutDialog"
         app:layout_constraintEnd_toStartOf="@+id/buttonYes"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/layoutDialog" />
+        app:layout_constraintTop_toBottomOf="@+id/layoutDialog"
+        android:focusable="true"
+        android:background="@drawable/button_focused_selector"/>
 
     <Button
         android:id="@+id/buttonYes"
@@ -71,11 +73,13 @@
         android:layout_height="80dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="40dp"
-        android:background="@drawable/button_warning_background"
+
         android:textColor="@color/colorWhite"
         android:textSize="48sp"
         app:layout_constraintBottom_toBottomOf="@+id/layoutDialog"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/buttonNo"
-        app:layout_constraintTop_toBottomOf="@+id/layoutDialog" />
+        app:layout_constraintTop_toBottomOf="@+id/layoutDialog"
+        android:focusable="true"
+        android:background="@drawable/button_focused_selector"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,16 +1,18 @@
 package com.example.responsive;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.os.DropBoxManager;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,25 +20,24 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.flask.colorpicker.ColorPickerView;
+import com.flask.colorpicker.builder.ColorPickerClickListener;
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -49,7 +50,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-
 public class MainActivity extends AppCompatActivity {
     EditText servidor;
     EditText DB;
@@ -58,13 +58,13 @@ public class MainActivity extends AppCompatActivity {
     EditText puerto;
     EditText instancia;
     private RecyclerView rv1;
-    //private TextView detalle;
     private ArrayList<String> lista1 = new ArrayList<>();
     private ArrayList<Integer> lista2 = new ArrayList<>();
     private ArrayList<String> listaestado = new ArrayList<>();
+    private ArrayList<String> listafecha = new ArrayList<>();
+    private ArrayList<String> listanumero = new ArrayList<>();
     Handler handler = new Handler();
-    private final int TIEMPO = 5000;
-    AdaptadorNumero adaptadorNumero = new AdaptadorNumero();
+    private final int TIEMPO = 10000;
     Connection connect;
     String servidor_remoto;
     String puerto_remoto;
@@ -72,63 +72,397 @@ public class MainActivity extends AppCompatActivity {
     String usuario_remoto;
     String password_remoto;
     String instancia_remoto;
+    Integer colorpendientes_remoto;
+    Integer coloratenciones_remoto;
+    Integer colorentregables_remoto;
+    Integer colortexto_remoto;
     SharedPreferences preferences;
-
+    private int selectedPosition = RecyclerView.NO_POSITION;
+    private MyAdapter adapter;
+    private AlertDialog alertDialog1;
+    private AlertDialog alertDialog2;
+    private AlertDialog alertDialogColores;
+    private TextView tvpendiente;
+    private TextView tvatencion;
+    private TextView tvporentregar;
+    private Button pendientes;
+    private Button entregas;
+    private Button atenciones;
+    private Button colortexto;
+    private int columnas;
+    private TextView tvtitulo;
+    private int currentBackgroundColor = 0xFFFF9900;
+    private float alto;
+    private float ancho;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        tvpendiente = findViewById(R.id.pendiente);
+        tvatencion=findViewById(R.id.atencion);
+        tvporentregar=findViewById(R.id.entrega);
+        tvtitulo=findViewById(R.id.textcomandassiges);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         preferences = getSharedPreferences("configuracion", Context.MODE_PRIVATE);
         rv1 = findViewById(R.id.rv1);
-        //detalle = findViewById(R.id.textViewDetalle);
-        GridLayoutManager gridLayoutManager =new GridLayoutManager(this,5);
-
-        //LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-        rv1.setLayoutManager(gridLayoutManager);
         rv1.addItemDecoration(new DividerItemDecoration(rv1.getContext(), DividerItemDecoration.VERTICAL));
-        llamaradaptador();
-        ImageButton btnrecargar = (ImageButton) findViewById(R.id.btnreload);
+        ancho=TextSizeAdjuster.ancho(MainActivity.this);
+        alto=TextSizeAdjuster.alto(MainActivity.this);
+        if (ancho < 4.0) {
+            columnas=1;
+        } else if (ancho >= 4.0 && ancho < 6.0) {
+            columnas=2;
+        } else if(ancho>=6 && ancho<10) {
+            columnas=3;
+        }else {
+            columnas=5;
+        }
+
+        rv1.setLayoutManager(new GridLayoutManager(this, columnas));
+        rv1.setHasFixedSize(true);
+        adapter = new MyAdapter(lista1);
+        rv1.setAdapter(adapter);
+
+        rv1.requestFocus();
+
+        rv1.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    int rowCount = adapter.getItemCount() / columnas; // Número de filas
+                    int itemCount = adapter.getItemCount();
+
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_DPAD_UP:
+                            if (selectedPosition >= columnas) {
+                                selectedPosition -= columnas;
+                                rv1.smoothScrollToPosition(selectedPosition);
+                                adapter.notifyDataSetChanged();
+                            }
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_DOWN:
+                            if (selectedPosition + columnas < itemCount) {
+                                selectedPosition += columnas;
+                                rv1.smoothScrollToPosition(selectedPosition);
+                                adapter.notifyDataSetChanged();
+                            }
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_LEFT:
+                            if (selectedPosition > 0) {
+                                selectedPosition--;
+                                rv1.smoothScrollToPosition(selectedPosition);
+                                adapter.notifyDataSetChanged();
+                            }
+                            break;
+                        case KeyEvent.KEYCODE_DPAD_RIGHT:
+                            if (selectedPosition < itemCount - 1) {
+                                selectedPosition++;
+                                rv1.smoothScrollToPosition(selectedPosition);
+                                adapter.notifyDataSetChanged();
+                            }
+                            break;
+                        case KeyEvent.KEYCODE_ENTER:
+                            //showToast("Item seleccionado: " + lista2.get(selectedPosition));
+                            showAlertDialog(selectedPosition);
+                            break;
+
+                    }
+
+                    return true;
+                }
+                return false;
+            }
+        });
+        //BOTON RECARGAR
+        ImageButton btnrecargar =findViewById(R.id.btnreload);
         btnrecargar.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 consulta();
-                adaptadorNumero.notifyDataSetChanged();
+                adapter.notifyDataSetChanged();
             }
         });
-        int configuracion = consulta_configuracion();
-        //Toast.makeText(this,configuracion+" no se encuentra la configuracion",Toast.LENGTH_LONG).show();
-        if (configuracion == 0) {
-            btnrecargar.setEnabled(false);
-            configdialog();
-        } else {
-            connect = connectionclass();
-            if (connect != null) {
-                consulta();
-                onMapReady();
-                btnrecargar.setEnabled(true);
-            } else {
-                Toast.makeText(this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
-            }
-
-        }
-        //TextView detalle = findViewById(R.id.textViewDetalle);
-        //detalle.setMovementMethod(new ScrollingMovementMethod());
-        ImageButton btnconfig = (ImageButton) findViewById(R.id.btnconfig);
+        //BOTON CONFIGURACION
+        ImageButton btnconfig = findViewById(R.id.btnconfig);
         btnconfig.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 configdialog();
             }
         });
+        //BOTON CAMBIAR COLOR
+        ImageButton cambiarcolor = findViewById(R.id.btncolor);
+        cambiarcolor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialogColor();
+            }
+        });
+
+        int configuracion = consulta_configuracion();
+        if (configuracion == 0) {
+            btnrecargar.setEnabled(false);
+            configdialog();
+        } else {
+            connect = connectionclass();
+            if (connect != null) {
+
+                consulta();
+                adapter.notifyDataSetChanged();
+                onMapReady();
+
+                btnrecargar.setEnabled(true);
+            } else {
+                Toast.makeText(this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
+            }
+        }
+        tvpendiente.setBackgroundColor(colorpendientes_remoto);
+        tvpendiente.setTextColor(colortexto_remoto);
+        tvatencion.setBackgroundColor(coloratenciones_remoto);
+        tvatencion.setTextColor(colortexto_remoto);
+        tvporentregar.setBackgroundColor(colorentregables_remoto);
+        tvporentregar.setTextColor(colortexto_remoto);
+    }
+    private void alertDialogColor(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View customLayout = inflater.inflate(R.layout.layout_color, null); // Cambia aquí al diseño correcto
+        builder.setView(customLayout);
+        alertDialogColores = builder.create();
+        alertDialogColores.show();
+        // Después de inflar el diseño, busca los botones en el diseño correcto
+        pendientes = customLayout.findViewById(R.id.btnpendiente);
+        atenciones = customLayout.findViewById(R.id.btnatencion);
+        entregas = customLayout.findViewById(R.id.btnentrega);
+        colortexto=customLayout.findViewById(R.id.btncolortexto);
+        pendientes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarcolor(1);
+            }
+        });
+        atenciones.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarcolor(2);
+            }
+        });
+        entregas.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarcolor(3);
+            }
+        });
+        colortexto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                cambiarcolor(4);
+            }
+        });
     }
 
+    private void cambiarcolor(int objeto){
+        switch (objeto){
+            case 1:
+                currentBackgroundColor=colorpendientes_remoto;
+                break;
+            case 2:
+                currentBackgroundColor=coloratenciones_remoto;
+                break;
+            case 3:
+                currentBackgroundColor=colorentregables_remoto;
+                break;
+            case 4:
+                currentBackgroundColor=colortexto_remoto;
+                break;
+        };
+        ColorPickerDialogBuilder
+                .with(MainActivity.this)
+                .initialColor(currentBackgroundColor)
+                .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                .density(12)
+                .setPositiveButton("ok", new ColorPickerClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
+                        currentBackgroundColor = selectedColor;
+                        SharedPreferences.Editor editor = preferences.edit();
+                        switch (objeto){
+                            case 1:
+                                tvpendiente.setBackgroundColor(selectedColor);
+
+                                editor.putInt("colorpendientes",selectedColor);
+
+                                break;
+                            case 2:
+                                tvatencion.setBackgroundColor(selectedColor);
+
+                                editor.putInt("coloratenciones",selectedColor);
+
+                                break;
+                            case 3:
+                                tvporentregar.setBackgroundColor(selectedColor);
+                                editor.putInt("colorentregables",selectedColor);
+
+                                break;
+                            case 4:
+                                tvporentregar.setTextColor(selectedColor);
+                                tvatencion.setTextColor(selectedColor);
+                                tvpendiente.setTextColor(selectedColor);
+                                editor.putInt("colortexto",selectedColor);
+                        }
+                        editor.commit();
+                        consulta();
+                        adapter.notifyDataSetChanged();
+
+                    }
+                })
+                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .build()
+                .show();
+    };
+    private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+        private List<String> data;
+        public MyAdapter(List<String> data) {
+            this.data = data;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_comandas, parent, false);
+            GridLayoutManager.LayoutParams lp = (GridLayoutManager.LayoutParams) view.getLayoutParams();
+
+            float alto=TextSizeAdjuster.alto(MainActivity.this);
+            if (alto < 5.0) {
+                lp.height = parent.getMeasuredHeight();
+            } else if (alto>=5.0 && alto<10){
+                lp.height = parent.getMeasuredHeight() / 2;
+            }else {
+                lp.height = parent.getMeasuredHeight() / 3;
+            }
+            view.setLayoutParams(lp);
+            return new ViewHolder(view);
+        }
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            holder.textView.setText(data.get(position));
+            LinearLayout.LayoutParams parametros = new LinearLayout.LayoutParams(
+                    /*width*/ RecyclerView.LayoutParams.MATCH_PARENT,
+                    /*height*/ RecyclerView.LayoutParams.MATCH_PARENT
+            );
+            parametros.setMargins(5, 5, 5, 5);
+            holder.textView.setLayoutParams(parametros);
+            int color = colorpendientes_remoto;
+            int estado = Integer.parseInt(listaestado.get(position));
+            if (estado == 2) {
+                color = coloratenciones_remoto;
+            } else if (estado == 3) {
+                color = colorentregables_remoto;
+            }
+            holder.textView.setTextColor(colortexto_remoto);
+            //currentBackgroundColor = color;
+            holder.textView.setBackgroundColor(color);
+            if (position == selectedPosition) {
+                holder.itemView.setBackgroundColor(Color.RED);
+            } else {
+                holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+            }
+        }
+        @Override
+        public int getItemCount() {
+            return data.size();
+        }
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            public ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textView = itemView.findViewById(R.id.textviewcomandas);
+                TextSizeAdjuster.adjustTextSizeBasedOnScreenSize(MainActivity.this, textView);
+                textView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int previousSelectedPosition = selectedPosition;
+                        selectedPosition = getAbsoluteAdapterPosition();
+
+                        // Notifica el cambio en la posición seleccionada para actualizar la vista
+                        notifyItemChanged(previousSelectedPosition);
+                        notifyItemChanged(selectedPosition);
+                        showAlertDialog(selectedPosition);
+                        //oast.makeText(MainActivity.this,"hiciste clic"+selectedPosition,Toast.LENGTH_SHORT).show();
+                    }
+                });
+                textView.setOnKeyListener(new View.OnKeyListener() {
+                    @Override
+                    public boolean onKey(View v, int keyCode, KeyEvent event) {
+
+                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                            int rowCount = adapter.getItemCount() / columnas; // Número de columnas
+                            int itemCount = adapter.getItemCount();
+
+                            switch (keyCode) {
+                                case KeyEvent.KEYCODE_DPAD_UP:
+                                    if (selectedPosition >= columnas) {
+                                        selectedPosition -= columnas;
+                                        rv1.smoothScrollToPosition(selectedPosition);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                    break;
+                                case KeyEvent.KEYCODE_DPAD_DOWN:
+                                    if (selectedPosition + columnas < itemCount) {
+                                        selectedPosition += columnas;
+                                        rv1.smoothScrollToPosition(selectedPosition);
+                                        adapter.notifyDataSetChanged();
+                                    }else {
+                                         selectedPosition=itemCount-1;
+                                        rv1.smoothScrollToPosition(selectedPosition);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                    break;
+                                case KeyEvent.KEYCODE_DPAD_LEFT:
+                                    if (selectedPosition > 0) {
+                                        selectedPosition--;
+                                        rv1.smoothScrollToPosition(selectedPosition);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                    break;
+                                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                                    if (selectedPosition < itemCount - 1) {
+                                        selectedPosition++;
+                                        rv1.smoothScrollToPosition(selectedPosition);
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                    break;
+                                case KeyEvent.KEYCODE_ENTER:
+                                    //showToast("Item seleccionado: " + lista2.get(selectedPosition));
+                                    showAlertDialog(selectedPosition);
+                                    //Toast.makeText(MainActivity.this,"hiciste clic"+selectedPosition,Toast.LENGTH_SHORT).show();
+                                    break;
+
+                            }
+
+                            return true;
+                        }
+
+                        return false;
+                    }
+                });
+            }
+        }
+    }
     public int consulta_configuracion() {
         servidor_remoto = preferences.getString("servidor", "");
         puerto_remoto = preferences.getString("puerto", "");
         DB_remoto = preferences.getString("DB", "");
         usuario_remoto = preferences.getString("usuario", "");
         password_remoto = preferences.getString("password", "");
-        instancia_remoto =preferences.getString("instancia","");
+        instancia_remoto = preferences.getString("instancia", "");
+        colorpendientes_remoto =preferences.getInt("colorpendientes", 0xFFFF9900);
+        coloratenciones_remoto =preferences.getInt("coloratenciones", 0xFFFFFF00);
+        colorentregables_remoto =preferences.getInt("colorentergables", 0xFF00FF00);
+        colortexto_remoto=preferences.getInt("colorentergables", 0xFF252850);
         if (servidor_remoto == "") {
             Toast.makeText(this, "CONFIGURE CONEXIÓN", Toast.LENGTH_LONG).show();
             return 0;
@@ -136,7 +470,6 @@ public class MainActivity extends AppCompatActivity {
             return 1;
         }
     }
-
     public void cargar_configuracion() {
         try {
             String servidor_local = servidor.getText().toString();
@@ -144,57 +477,39 @@ public class MainActivity extends AppCompatActivity {
             String DB_local = DB.getText().toString();
             String usuario_local = usuario.getText().toString();
             String password_local = password.getText().toString();
-            String instancia_local=instancia.getText().toString();
+            String instancia_local = instancia.getText().toString();
+            Integer colorpendientes_local=0xFFFF9900;
+            Integer coloratenciones_local=0xFFFFFF00;
+            Integer colorentregables_local=0xFF00FF00;
+            Integer colortexto_local=0xFF252850;
             SharedPreferences.Editor editor = preferences.edit();
             editor.putString("servidor", servidor_local);
             editor.putString("DB", DB_local);
             editor.putString("puerto", puerto_local);
             editor.putString("usuario", usuario_local);
             editor.putString("password", password_local);
-            editor.putString("instancia",instancia_local);
+            editor.putString("instancia", instancia_local);
+            editor.putInt("colorpendientes",colorpendientes_local);
+            editor.putInt("coloratenciones",coloratenciones_local);
+            editor.putInt("colorentregables",colorentregables_local);
+            editor.putInt("colortexto",colortexto_local);
             editor.commit();
         } catch (Throwable e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
-
     }
-
-    public void llamaradaptador() {
-        rv1.setAdapter(adaptadorNumero);
-        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
-
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                adaptadorNumero.notifyItemChanged(viewHolder.getAbsoluteAdapterPosition());
-                int id = lista2.get(viewHolder.getAbsoluteAdapterPosition());
-                int estado = Integer.parseInt(listaestado.get(viewHolder.getAbsoluteAdapterPosition()));
-                String nroyfecha = lista1.get(viewHolder.getAbsoluteAdapterPosition());
-                alertdialog(id, estado, nroyfecha);
-            }
-        };
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
-        itemTouchHelper.attachToRecyclerView(rv1);
-    }
-
     public void ejecutarTarea() {
         handler.postDelayed(new Runnable() {
-
             public void run() {
                 consulta();
-                adaptadorNumero.notifyDataSetChanged();
+                adapter.notifyDataSetChanged();
                 handler.postDelayed(this, TIEMPO);
             }
         }, TIEMPO);
     }
-
     public void onMapReady() {
         ejecutarTarea();
     }
-
     public void consulta() {
         try {
             connect = connectionclass();
@@ -205,35 +520,31 @@ public class MainActivity extends AppCompatActivity {
                 List comandalist = new ArrayList();
                 lista1.clear();
                 lista2.clear();
+                listafecha.clear();
+                listanumero.clear();
                 listaestado.clear();
                 JSONArray root = new JSONArray();
                 while (resultSet.next()) {
                     String json = resultSet.getString("jsonComanda").replaceAll("[^\\x00-\\x7F]", "");
-
                     int id_comanda = resultSet.getInt("id");
                     String estado = resultSet.getString("estado");
                     Collections.addAll(comandalist, json);
-
-                    JSONObject jsonObject=null;
+                    JSONObject jsonObject = null;
                     try {
-                        if (json != null){
+                        if (json != null) {
                             jsonObject = new JSONObject(json);
 
                             lista2.add(id_comanda);
                             listaestado.add(estado);
                             root.put(jsonObject);
                         }
-
-                    }catch (JSONException e){
-                        Log.e("JSON-LETRAS",e.getMessage());
+                    } catch (JSONException e) {
+                        Log.e("JSON-LETRAS", e.getMessage());
                     }
-
-
                 }
                 for (int i = 0; i < root.length(); i++) {
                     try {
                         JSONObject jsonObject = root.getJSONObject(i);
-
                         String centroemisor = jsonObject.getString("centroemisor");
                         String serie = jsonObject.getString("nrodocumento").substring(0, 3);
                         String nro = jsonObject.getString("nrodocumento").substring(3, 12);
@@ -243,21 +554,29 @@ public class MainActivity extends AppCompatActivity {
                         String jsonitem = jsonObject.getString("Items");
                         List itemList = new ArrayList();
                         itemList.clear();
+                        listafecha.add(fecha);
+                        listanumero.add(correlativo);
                         Collections.addAll(itemList, jsonitem.substring(1, jsonitem.length() - 1));
                         JSONArray itemroot = new JSONArray(itemList.toString().replaceAll("[^\\x00-\\x7F]", ""));
-                        String cadena = "       Fecha:                              " + fecha + System.getProperty("line.separator") +
-                                "       Documento:                    " + correlativo + System.getProperty("line.separator") +
-                                "       Código          Cantidad          Descripción" + System.getProperty("line.separator") +
-                                "____________________________________________________________";
+
+
+                        String cadena =
+                                        "   Fecha:                    " + fecha + System.getProperty("line.separator") +
+                                        "   Documento:          " + correlativo + System.getProperty("line.separator") +
+                                        System.getProperty("line.separator") +
+                                        "   Cantidad                                  Descripción" + System.getProperty("line.separator") +
+                                        "_________________________________________________________"
+                                        //+System.getProperty("line.separator") +
+                                        //"1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20-21-22-23-"
+                                        ;
                         for (int u = 0; u < itemroot.length(); u++) {
                             JSONObject itemjsonObject = itemroot.getJSONObject(u);
-                            String cdarticulo = itemjsonObject.getString("CDARTICULO");
+                            //String cdarticulo = itemjsonObject.getString("CDARTICULO");
                             String cantidad = itemjsonObject.getString("CANTIDAD");
                             String descripcion = itemjsonObject.getString("DSARTICULO");
                             cadena = cadena + System.getProperty("line.separator") +
-                                    "      " + cdarticulo +
-                                    "          " + cantidad +
-                                    "          " + descripcion;
+                                    "        " + cantidad +
+                                    "                    " + descripcion;
                             String tipopan = itemjsonObject.getString("TIPOPAN");
                             if (tipopan.length() < 1) {
                                 Log.d("TIPOPANVACIO", String.valueOf(tipopan.length()));
@@ -265,8 +584,8 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("TIPOPANLLENO", String.valueOf(tipopan.length()));
                                 cadena = cadena + System.getProperty("line.separator");
                                 cadena = cadena +
-                                        "                                                   " +
-                                        "      " + tipopan;
+                                        "                          " +
+                                        "                " + tipopan;
                             }
                             try {
                                 String jsondetalle = itemjsonObject.getString("COMENTARIOS");
@@ -278,8 +597,8 @@ public class MainActivity extends AppCompatActivity {
                                     JSONObject detallejsonObject = detalleroot.getJSONObject(d);
                                     String comentarios = detallejsonObject.getString("COMENT");
                                     cadena = cadena + System.getProperty("line.separator") +
-                                            "                                                   " +
-                                            "      " + comentarios;
+                                            "                          " +
+                                            "                " + comentarios;
                                 }
                             } catch (Throwable e) {
                                 Log.d("ERRORCOMENTARIO", e.getMessage());
@@ -287,99 +606,24 @@ public class MainActivity extends AppCompatActivity {
                             cadena = cadena + System.getProperty("line.separator");
                         }
                         ;
-                        cadena = cadena + "____________________________________________________________" +
+                        cadena = cadena + "_________________________________________________________" +
                                 System.getProperty("line.separator") +
-                                "       ** Comentarios **" +
+                                "   ** Comentarios **" +
                                 System.getProperty("line.separator") +
-                                "       " + comentario;
-                        //TextView detalle = findViewById(R.id.textViewDetalle);
-                        //detalle.setText(cadena);
+                                "       " + comentario+ System.getProperty("line.separator");
 
-
-                        //////////////////////////////////
                         lista1.add(cadena);
                     } catch (Throwable e) {
                         Log.e("ERRORJSON", "json error: " + e.getMessage());
                     }
-
                 }
                 connect.close();
             }
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
-
-    private class AdaptadorNumero extends RecyclerView.Adapter<AdaptadorNumero.AdaptadorNumeroHolder> {
-        @NonNull
-        @Override
-        public AdaptadorNumeroHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_comandas, parent, false);
-            GridLayoutManager.LayoutParams lp = (GridLayoutManager.LayoutParams) v.getLayoutParams();
-            lp.height = parent.getMeasuredHeight() / 2;
-
-            v.setLayoutParams(lp);
-            return new AdaptadorNumeroHolder(v);
-
-            //return new AdaptadorNumeroHolder(getLayoutInflater().inflate(R.layout.layout_comandas, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull AdaptadorNumeroHolder holder, int position) {
-            holder.imprimir(position);
-        }
-
-        @Override
-        public int getItemCount() {
-            return lista1.size();
-        }
-
-        class AdaptadorNumeroHolder extends RecyclerView.ViewHolder {
-            TextView tvcomanda;
-
-            public AdaptadorNumeroHolder(@NonNull View itemView) {
-                super(itemView);
-                tvcomanda = itemView.findViewById(R.id.textviewcomandas);
-
-                ////////////////////////ESTO ES PARA EL SCROLL DEL TEXTVIEW//////////////////////////////////
-                tvcomanda.setOnTouchListener(new View.OnTouchListener() {
-
-                    public boolean onTouch(View v, MotionEvent event) {
-                        // Disallow the touch request for parent scroll on touch of child view
-                        v.getParent().requestDisallowInterceptTouchEvent(true);
-                        return false;
-                    }
-                });
-                tvcomanda.setMovementMethod(new ScrollingMovementMethod());
-                //////////////////////////////////////////////////////////////////////////////////////////////
-            }
-
-            @SuppressLint("ResourceType")
-            public void imprimir(int position) {
-                tvcomanda.setText(lista1.get(position));
-                tvcomanda.setId(lista2.get(position));
-                int color = 0xFFFF9900;
-                int estado = Integer.parseInt(listaestado.get(position));
-                if (estado == 2) {
-                    color = 0xFFFFFF00;
-                } else if (estado == 3) {
-                    color = 0xFF00FF00;
-                }
-                tvcomanda.setBackgroundColor(color);
-                LinearLayout.LayoutParams parametros = new LinearLayout.LayoutParams(
-                        /*width*/ RecyclerView.LayoutParams.MATCH_PARENT,
-                        /*height*/ RecyclerView.LayoutParams.MATCH_PARENT
-                );
-                parametros.setMargins(5, 5, 5, 5);
-                tvcomanda.setLayoutParams(parametros);
-
-            }
-        }
-    }
-
-    public void consultaid(int id) {
+    public String consultaid(int id) {
         connect = connectionclass();
         if (connect != null) {
             String query = "Select * from Comandas where id=" + String.valueOf(id);
@@ -407,23 +651,21 @@ public class MainActivity extends AppCompatActivity {
                         Collections.addAll(itemList, jsonitem.substring(1, jsonitem.length() - 1));
                         JSONArray itemroot = new JSONArray(itemList.toString().replaceAll("[^\\x00-\\x7F]", ""));
                         String cadena = System.getProperty("line.separator") +
-                                "       Fecha:                              " + fecha + System.getProperty("line.separator") +
+                                "   Fecha:                              " + fecha + System.getProperty("line.separator") +
                                 System.getProperty("line.separator") +
-                                "       Documento:                    " + correlativo + System.getProperty("line.separator") +
+                                "   Documento:                    " + correlativo + System.getProperty("line.separator") +
                                 System.getProperty("line.separator") +
-                                System.getProperty("line.separator") +
-                                "       Código          Cantidad          Descripción" +
+                                "   Cantidad                                  Descripción" +
                                 System.getProperty("line.separator") +
                                 "____________________________________________________________";
                         for (int u = 0; u < itemroot.length(); u++) {
                             JSONObject itemjsonObject = itemroot.getJSONObject(u);
-                            String cdarticulo = itemjsonObject.getString("CDARTICULO");
+                            //String cdarticulo = itemjsonObject.getString("CDARTICULO");
                             String cantidad = itemjsonObject.getString("CANTIDAD");
                             String descripcion = itemjsonObject.getString("DSARTICULO");
                             cadena = cadena + System.getProperty("line.separator") +
-                                    "      " + cdarticulo +
-                                    "          " + cantidad +
-                                    "          " + descripcion;
+                                    "        " + cantidad +
+                                    "                    " + descripcion;
                             String tipopan = itemjsonObject.getString("TIPOPAN");
                             if (tipopan.length() < 1) {
                                 Log.d("TIPOPANVACIO", String.valueOf(tipopan.length()));
@@ -431,8 +673,8 @@ public class MainActivity extends AppCompatActivity {
                                 Log.d("TIPOPANLLENO", String.valueOf(tipopan.length()));
                                 cadena = cadena + System.getProperty("line.separator");
                                 cadena = cadena +
-                                        "                                                   " +
-                                        "      " + tipopan;
+                                        "                          " +
+                                        "                " + tipopan;
                             }
                             try {
                                 String jsondetalle = itemjsonObject.getString("COMENTARIOS");
@@ -445,8 +687,8 @@ public class MainActivity extends AppCompatActivity {
                                     JSONObject detallejsonObject = detalleroot.getJSONObject(d);
                                     String comentarios = detallejsonObject.getString("COMENT");
                                     cadena = cadena + System.getProperty("line.separator") +
-                                            "                                                   " +
-                                            "      " + comentarios;
+                                            "                          " +
+                                            "                " + comentarios;
                                 }
                             } catch (Throwable e) {
                                 Log.d("ERRORCOMENTARIO", e.getMessage());
@@ -459,8 +701,7 @@ public class MainActivity extends AppCompatActivity {
                                 "       ** Comentarios **" +
                                 System.getProperty("line.separator") +
                                 "       " + comentario;
-                        //TextView detalle = findViewById(R.id.textViewDetalle);
-                        //detalle.setText(cadena);
+                        return cadena;
                     }
                 }
                 connect.close();
@@ -468,8 +709,8 @@ public class MainActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
+        return "no existe";
     }
-
     public void updateestado(int id, int nuevoestado) {
         try {
             connect = connectionclass();
@@ -500,7 +741,7 @@ public class MainActivity extends AppCompatActivity {
                 ResultSet resultSet = statement.executeQuery(query);
                 if (resultSet.next()) {
                     consulta();
-                    adaptadorNumero.notifyDataSetChanged();
+                    adapter.notifyDataSetChanged();
                 }
             }
             connect.close();
@@ -508,15 +749,11 @@ public class MainActivity extends AppCompatActivity {
             Log.e("UPDATECOMANDA", e.getMessage());
         }
     }
-
-    public void alertdialog(int id, int estado, String nroyfecha) {
-        int estadoactual = estado;
-        int nuevoestado = estadoactual + 1;
+    public void alertdialog(int id, int estado, String numero, String fecha) {
+        int nuevoestado = estado + 1;
         String mensajeestadoactual = "";
         String mensajeestadonuevo = "";
-        String nro = nroyfecha.substring(0, 17);
-        String fecha = "Fecha: " + nroyfecha.substring(17, 40);
-        switch (estadoactual) {
+        switch (estado) {
             case 1:
                 mensajeestadoactual = "PENDIENTE";
                 mensajeestadonuevo = "ATENCIÓN";
@@ -536,10 +773,10 @@ public class MainActivity extends AppCompatActivity {
                 (ConstraintLayout) findViewById(R.id.layoutDialogContainer)
         );
         builder.setView(view);
-        ((TextView) view.findViewById(R.id.textTitle)).setText("Cambio de Estado de la Comanda");
+        ((TextView) view.findViewById(R.id.textTitle)).setText("Cambio de Estado de la Comanda ");
         ((TextView) view.findViewById(R.id.textMessage)).setText("¿Seguro de cambiar el Estado de la Comanda?"
                 + System.getProperty("line.separator") +
-                "Nro: " + nro +
+                "Nro: " + numero +
                 System.getProperty("line.separator") +
                 fecha
                 + System.getProperty("line.separator") +
@@ -549,28 +786,45 @@ public class MainActivity extends AppCompatActivity {
         ((Button) view.findViewById(R.id.buttonYes)).setText("Cambiar");
         ((Button) view.findViewById(R.id.buttonNo)).setText("Cancelar");
         ((ImageView) view.findViewById(R.id.imageIcon)).setImageResource(R.drawable.ic_question);
-        final AlertDialog alertDialog = builder.create();
+        alertDialog2 = builder.create();
+        view.findViewById(R.id.buttonYes).setFocusable(true);
         view.findViewById(R.id.buttonYes).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 updateestado(id, nuevoestado);
                 consulta();
-                adaptadorNumero.notifyDataSetChanged();
-                alertDialog.dismiss();
+                adapter.notifyDataSetChanged();
+                alertDialog2.dismiss();
+                if (estado == 3) {
+                    alertDialog1.dismiss();
+                }
             }
         });
         view.findViewById(R.id.buttonNo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                alertDialog.dismiss();
+                alertDialog2.dismiss();
             }
         });
-        if (alertDialog.getWindow() != null) {
-            alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
-        }
-        alertDialog.show();
-    }
+        alertDialog2.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                switch (keyCode) {
+                    case KeyEvent.KEYCODE_ENTER:
 
+                        break;
+                    case 0:
+                        alertDialog2.dismiss();
+                        break;
+                }
+                return false;
+            }
+        });
+        if (alertDialog2.getWindow() != null) {
+            alertDialog2.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        }
+        alertDialog2.show();
+    }
     @SuppressLint("MissingInflatedId")
     public void configdialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.ConfigDialogTheme);
@@ -579,7 +833,7 @@ public class MainActivity extends AppCompatActivity {
                 (ConstraintLayout) findViewById(R.id.layoutDialogConfiguracion)
         );
         builder.setView(view);
-        ((TextView) view.findViewById(R.id.textTitle)).setText("Configuración de Conexión");
+        ((TextView) view.findViewById(R.id.textTitle)).setText("Configuración de Conexión " + System.getProperty("line.separator")+"Ancho: " + ancho + " Alto: "+ alto);
         ((TextView) view.findViewById(R.id.textServidor)).setText("IP del Servidor");
         ((TextView) view.findViewById(R.id.textDatabase)).setText("Nombre de la base de datos");
         ((TextView) view.findViewById(R.id.textPuerto)).setText("Puerto de Conexión");
@@ -588,23 +842,19 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) view.findViewById(R.id.textInstancia)).setText("Instancia de la BD");
         ((Button) view.findViewById(R.id.buttonYes)).setText("Guardar");
         ((Button) view.findViewById(R.id.buttonNo)).setText("Cancelar");
-
         servidor = (EditText) view.findViewById(R.id.edittextServidor);
         DB = (EditText) view.findViewById(R.id.edittextDatabase);
         puerto = (EditText) view.findViewById(R.id.edittextPuerto);
         usuario = (EditText) view.findViewById(R.id.edittextUser);
         password = (EditText) view.findViewById(R.id.edittextPassword);
         instancia = (EditText) view.findViewById(R.id.edittextInstancia);
-
         consulta_configuracion();
-
         servidor.setText(servidor_remoto);
         DB.setText(DB_remoto);
         puerto.setText(puerto_remoto);
         usuario.setText(usuario_remoto);
         password.setText(password_remoto);
         instancia.setText(instancia_remoto);
-
         final AlertDialog alertDialog = builder.create();
         view.findViewById(R.id.buttonYes).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -613,14 +863,14 @@ public class MainActivity extends AppCompatActivity {
                 cargar_configuracion();
                 connect = connectionclass();
                 if (connect != null) {
-                    consulta();
                     onMapReady();
+                    consulta();
+                    adapter.notifyDataSetChanged();
                     ImageButton btnrecargar = (ImageButton) findViewById(R.id.btnreload);
                     btnrecargar.setEnabled(true);
                 } else {
                     Log.e("ERRORDECONEXION", "NO CONECTO");
                     alertDialog.show();
-
                 }
             }
         });
@@ -635,7 +885,6 @@ public class MainActivity extends AppCompatActivity {
         }
         alertDialog.show();
     }
-
     public Connection connectionclass() {
         SharedPreferences preferences = getSharedPreferences("configuracion", Context.MODE_PRIVATE);
         servidor_remoto = preferences.getString("servidor", "");
@@ -643,7 +892,11 @@ public class MainActivity extends AppCompatActivity {
         DB_remoto = preferences.getString("DB", "");
         usuario_remoto = preferences.getString("usuario", "");
         password_remoto = preferences.getString("password", "");
-        instancia_remoto =preferences.getString("instancia", "");
+        instancia_remoto = preferences.getString("instancia", "");
+        colorpendientes_remoto =preferences.getInt("colorpendientes",0xFFFF9900);
+        coloratenciones_remoto =preferences.getInt("coloratenciones",0xFFFFFF00);
+        colorentregables_remoto =preferences.getInt("colorentregables",0xFF00FF00);
+        colortexto_remoto=preferences.getInt("colortexto",0xFF252850);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         Connection connection = null;
@@ -656,7 +909,7 @@ public class MainActivity extends AppCompatActivity {
                     "databasename=" + DB_remoto +
                     ";user=" + usuario_remoto +
                     ";password=" + password_remoto +
-                    ";instance=" +instancia_remoto+
+                    ";instance=" + instancia_remoto +
                     ";loginTimeout=5;";
             connection = DriverManager.getConnection(ConnectionURL);
         } catch (ClassNotFoundException e) {
@@ -667,5 +920,89 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "No hay conexión", Toast.LENGTH_SHORT).show();
         }
         return connection;
+    }
+    private void showAlertDialog(Integer codigo) {
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View customLayout = inflater.inflate(R.layout.comanda_personal, null);
+        FrameLayout frameLayout = new FrameLayout(this);
+        frameLayout.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        frameLayout.setBackgroundResource(R.drawable.transparent_background);
+        frameLayout.addView(customLayout);
+        builder1.setView(frameLayout);
+        alertDialog1 = builder1.create();
+        TextView comandapersonal = customLayout.findViewById(R.id.textViewComandaPersonal);
+        comandapersonal.setMovementMethod(new ScrollingMovementMethod());
+        comandapersonal.setText(lista1.get(selectedPosition));
+
+
+        comandapersonal.setOnTouchListener(new View.OnTouchListener() {
+            private GestureDetector gestureDetector = new GestureDetector(MainActivity.this, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onDoubleTap(MotionEvent e) {
+                    // Manejar el doble toque aquí
+                    int id = lista2.get(selectedPosition);
+                    int estado = Integer.parseInt(listaestado.get(selectedPosition));
+                    String fecha = listafecha.get(selectedPosition);
+                    String numero = listanumero.get(selectedPosition);
+                    alertdialog(id, estado, numero, fecha);
+                    return true;
+                }
+            });
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                boolean consumed = gestureDetector.onTouchEvent(event);
+
+                if (!consumed) {
+                    // Si no se consumió el evento, permitir que el ScrollView lo maneje
+                    return false;
+                } else {
+                    // Si se consumió el evento, retornar true para indicar que fue manejado
+                    return true;
+                }
+            }
+        });
+        alertDialog1.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                // Aquí puedes poner el código para manejar el cierre del AlertDialog
+                // Puedes colocar el código para establecer el foco en el primer elemento del RecyclerView y actualizar selectedPosition aquí
+                if (adapter.getItemCount() > 0) {
+                    //Toast.makeText(MainActivity.this,"se cerro el Dialogo",Toast.LENGTH_SHORT).show();
+                    //selectedPosition = 0;
+                    rv1.requestFocus();
+                    //rv1.getChildAt(selectedPosition).requestFocus();
+                    //adapter.notifyDataSetChanged();
+                }
+            }
+        });
+        alertDialog1.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                switch (keyCode) {
+                    case KeyEvent.KEYCODE_ENTER:
+                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                            int id = lista2.get(selectedPosition);
+                            int estado = Integer.parseInt(listaestado.get(selectedPosition));
+                            String fecha = listafecha.get(selectedPosition);
+                            String numero = listanumero.get(selectedPosition);
+                            alertdialog(id, estado, numero, fecha);
+                        }
+                        break;
+                    case 0:
+                        if (alertDialog1 != null && alertDialog1.isShowing()) {
+                            alertDialog1.dismiss();
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
+        alertDialog1.setCanceledOnTouchOutside(true);
+        alertDialog1.show();
     }
 }
