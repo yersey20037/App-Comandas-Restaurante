@@ -1,0 +1,11 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        >
+        <shape android:shape="rectangle">
+            <!-- Borde personalizado -->
+            <stroke
+                android:width="5dp"
+                android:color="@color/black" /> <!-- Cambia esto al color que desees para el borde -->
+        </shape>
+    </item>
+</layer-list>

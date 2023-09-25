@@ -77,4 +77,23 @@ public class TextSizeAdjuster {
         }
         return 0;
     }
+    public static int getScreenWidth(Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (windowManager != null) {
+            windowManager.getDefaultDisplay().getMetrics(metrics);
+            return metrics.widthPixels; // Ancho en píxeles
+        }
+        return 0;
+    }
+
+    public static int getScreenHeight(Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (windowManager != null) {
+            windowManager.getDefaultDisplay().getMetrics(metrics);
+            return metrics.heightPixels; // Alto en píxeles
+        }
+        return 0;
+    }
 }

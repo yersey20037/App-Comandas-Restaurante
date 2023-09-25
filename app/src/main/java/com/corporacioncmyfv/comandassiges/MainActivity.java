@@ -11,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -34,13 +35,18 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.transition.AutoTransition;
+import androidx.transition.Transition;
+import androidx.transition.TransitionManager;
 
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerClickListener;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -59,6 +65,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+
 public class MainActivity extends AppCompatActivity {
     private final int TIEMPO = 10000;
     EditText servidor;
@@ -67,6 +74,10 @@ public class MainActivity extends AppCompatActivity {
     EditText password;
     EditText puerto;
     EditText instancia;
+    EditText edtcolumnas;
+    EditText edtfilas;
+    EditText edtttexto;
+    EditText edtttextoampli;
     Handler handler = new Handler();
     Connection connect;
     String servidor_remoto;
@@ -81,17 +92,21 @@ public class MainActivity extends AppCompatActivity {
     Integer colorentregadas_remoto;
     Integer coloranuladas_remoto;
     Integer colortexto_remoto;
+    Integer ttexto_remoto;
+    Integer ttextoampli_remoto;
     Boolean checkpendiente_remoto;
     Boolean checkatencion_remoto;
     Boolean checkentregado_remoto;
+    Boolean checkentregadas_remoto;
+    Boolean checkanuladas_remoto;
+    Boolean checkbloqueoestado_remoto;
+    Boolean checkbloqueoanulacion_remoto;
     Boolean checkTI_remoto;
     Boolean checkDT_remoto;
-    Boolean checkentregada_remoto;
-    Boolean checkanulada_remoto;
     Boolean checkTI_remoto_historico;
     Boolean checkDT_remoto_historico;
-
-    Boolean layout_historico=false;
+    String password_app_remoto;
+    Boolean layout_historico = false;
 
     SharedPreferences preferences;
     private RecyclerView rv1;
@@ -105,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     private MyAdapter adapter;
     private AlertDialog alertDialog1;
     private AlertDialog alertDialog2;
+    private AlertDialog alertDialogpassword;
     private AlertDialog alertDialogColores;
     private AlertDialog alertDialogVistas;
     private TextView tvpendiente;
@@ -112,66 +128,63 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvporentregar;
     private TextView tventregadas;
     private TextView tvanuladas;
-    private Button pendientes;
-    private Button entregas;
-    private Button atenciones;
-    private Button colortexto;
-    private Button entregadas;
-    private Button anuladas;
-    private int columnas;
+    private TextView pendientes;
+    private TextView entregas;
+    private TextView atenciones;
+    private TextView colortexto;
+    private TextView entregadas;
+    private TextView anuladas;
     private TextView tvtitulo;
     private int currentBackgroundColor = 0xFFFF9900;
-    private float alto;
-    private float ancho;
+    private int filas;
+    private int columnas;
+    private int ttexto;
+    private int ttextoampli;
     private CheckBox checkpendiente;
     private CheckBox checkatencion;
     private CheckBox checkentregado;
+    private CheckBox checkentregadas;
+    private CheckBox checkanuladas;
     private CheckBox checkTI;
     private CheckBox checkDT;
+    private CheckBox checkbloqueoestado;
+    private CheckBox checkbloqueoanulacion;
     private ConstraintLayout cl_estados;
     private ConstraintLayout cl_estados_historicos;
     private ConstraintLayout cl_cambiacolor_historicos;
+    private Boolean seguridad;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         tvpendiente = findViewById(R.id.pendiente);
         tvatencion = findViewById(R.id.atencion);
         tvporentregar = findViewById(R.id.entrega);
         tvtitulo = findViewById(R.id.textcomandassiges);
-        tventregadas=findViewById(R.id.entregadas);
-        tvanuladas=findViewById(R.id.anuladas);
+        tventregadas = findViewById(R.id.entregadas);
+        tvanuladas = findViewById(R.id.anuladas);
         cl_estados = findViewById(R.id.estados);
         cl_estados_historicos = findViewById(R.id.estados_historico);
-
+        seguridad = false;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         preferences = getSharedPreferences("configuracion", Context.MODE_PRIVATE);
         rv1 = findViewById(R.id.rv1);
         rv1.addItemDecoration(new DividerItemDecoration(rv1.getContext(), DividerItemDecoration.VERTICAL));
-        ancho = TextSizeAdjuster.ancho(MainActivity.this);
-        alto = TextSizeAdjuster.alto(MainActivity.this);
-        if (ancho < 4.0) {
-            columnas = 1;
-        } else if (ancho >= 4.0 && ancho < 6.0) {
-            columnas = 2;
-        } else if (ancho >= 6 && ancho < 10) {
-            columnas = 3;
-        } else {
-            columnas = 5;
-        }
+
+        columnas = preferences.getInt("columnas", 1);
 
         rv1.setLayoutManager(new GridLayoutManager(this, columnas));
         rv1.setHasFixedSize(true);
         adapter = new MyAdapter(lista1);
         rv1.setAdapter(adapter);
-
         rv1.requestFocus();
 
         rv1.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
+                columnas = preferences.getInt("columnas", 1);
                 if (event.getAction() == KeyEvent.ACTION_DOWN) {
                     int rowCount = adapter.getItemCount() / columnas; // Número de filas
                     int itemCount = adapter.getItemCount();
@@ -221,6 +234,10 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnrecargar = findViewById(R.id.btnreload);
         btnrecargar.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean("checkTI",true);
+                editor.putBoolean("checkDT",true);
+                editor.commit();
                 if (layout_historico==false){
                     layout_historico=true;
                 }else{
@@ -238,65 +255,365 @@ public class MainActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
         });
-        //BOTON VISTAS
-        ImageButton btnvistas = findViewById(R.id.btnvistas);
-        btnvistas.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                alertDialogVistas();
+
+
+        final boolean[] isExpanded = {false};
+        FloatingActionButton menuFlotante = findViewById(R.id.menuflotante);
+        FloatingActionButton btnconexion = findViewById(R.id.btnconexionflotante);
+        FloatingActionButton btnfiltros = findViewById(R.id.btnfiltrosflotante);
+        FloatingActionButton btncolores = findViewById(R.id.btncoloresflotante);
+        ConstraintLayout menuContenedorFlotante = findViewById(R.id.menucontenedorflotante);
+        ConstraintLayout constraintLayout = findViewById(R.id.menucontenedorflotante);
+        password_app_remoto = preferences.getString("passwordapp", "");
+        if (password_app_remoto == "") {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setCancelable(false);
+            // Inflar el diseño personalizado del AlertDialog
+            LayoutInflater inflater = getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.layout_password, null);
+            builder.setView(dialogView);
+
+            // Obtener referencias a elementos del diseño personalizado
+            final EditText passwordEditText = dialogView.findViewById(R.id.passwordEditText);
+            final ImageView showHidePassword = dialogView.findViewById(R.id.showHidePassword);
+            final TextView titleTextView = dialogView.findViewById(R.id.titleTextView);
+
+            // Configurar el título del AlertDialog desde Java
+            titleTextView.setText("Crea una contraseña");
+
+            // Configurar la EditText para ser de tipo contraseña y permitir ver u ocultar el texto
+            passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            showHidePassword.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int inputType = passwordEditText.getInputType();
+                    if (inputType == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                        passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                    } else {
+                        passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    }
+                    passwordEditText.setSelection(passwordEditText.getText().length()); // Colocar el cursor al final del texto
+                }
+            });
+
+            // Configurar el botón de aceptar
+            builder.setPositiveButton("Grabar", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                    String password = passwordEditText.getText().toString();
+
+                    if (!TextUtils.isEmpty(password)) {
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.putString("passwordapp", password);
+                        editor.commit();
+                        alertDialogpassword.dismiss();
+                        int configuracion = consulta_configuracion();
+                        if (configuracion == 0) {
+                            btnrecargar.setEnabled(false);
+                            configdialog();
+                        } else {
+                            connect = connectionclass();
+                            if (connect != null) {
+
+                                if (layout_historico == true) {
+                                    consulta_historico();
+                                    cl_estados.setVisibility(View.GONE);
+                                    cl_estados_historicos.setVisibility(View.VISIBLE);
+                                } else {
+                                    consulta();
+                                    cl_estados.setVisibility(View.VISIBLE);
+                                    cl_estados_historicos.setVisibility(View.GONE);
+                                }
+                                adapter.notifyDataSetChanged();
+                                onMapReady();
+
+                                btnrecargar.setEnabled(true);
+                            } else {
+                                Toast.makeText(MainActivity.this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        tvpendiente.setBackgroundColor(colorpendientes_remoto);
+                        tvpendiente.setTextColor(colortexto_remoto);
+                        tvatencion.setBackgroundColor(coloratenciones_remoto);
+                        tvatencion.setTextColor(colortexto_remoto);
+                        tvporentregar.setBackgroundColor(colorentregables_remoto);
+                        tvporentregar.setTextColor(colortexto_remoto);
+                        tventregadas.setBackgroundColor(colorentregadas_remoto);
+                        tventregadas.setTextColor(colortexto_remoto);
+                        tvanuladas.setBackgroundColor(coloranuladas_remoto);
+                        tvanuladas.setTextColor(colortexto_remoto);
+                    } else {
+                        // La contraseña está vacía, mostrar un mensaje o tomar otra acción si es necesario
+                        //Toast.makeText(MainActivity.this, "La contraseña está vacía", Toast.LENGTH_SHORT).show();
+                        passwordEditText.setError("La contraseña no puede estar vacía");
+                        // No cierres el diálogo aquí
+                    }
+                }
+            });
+
+            // Crear y mostrar el AlertDialog
+            alertDialogpassword = builder.create();
+            alertDialogpassword.show();
+            // Personalizar el comportamiento de cierre del diálogo
+            alertDialogpassword.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String password = passwordEditText.getText().toString();
+
+                    // Verificar si la contraseña está vacía
+                    if (TextUtils.isEmpty(password)) {
+                        // La contraseña está vacía, mostrar un mensaje o tomar otra acción si es necesario
+                        //Toast.makeText(MainActivity.this, "La contraseña está vacía", Toast.LENGTH_SHORT).show();
+                        passwordEditText.setError("La contraseña no puede estar vacía");
+                    } else {
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.putString("passwordapp", password);
+                        editor.commit();
+                        alertDialogpassword.dismiss();
+                        int configuracion = consulta_configuracion();
+                        if (configuracion == 0) {
+                            btnrecargar.setEnabled(false);
+                            configdialog();
+                        } else {
+                            connect = connectionclass();
+                            if (connect != null) {
+
+                                if (layout_historico == true) {
+                                    consulta_historico();
+                                    cl_estados.setVisibility(View.GONE);
+                                    cl_estados_historicos.setVisibility(View.VISIBLE);
+                                } else {
+                                    consulta();
+                                    cl_estados.setVisibility(View.VISIBLE);
+                                    cl_estados_historicos.setVisibility(View.GONE);
+                                }
+                                adapter.notifyDataSetChanged();
+                                onMapReady();
+
+                                btnrecargar.setEnabled(true);
+                            } else {
+                                Toast.makeText(MainActivity.this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        tvpendiente.setBackgroundColor(colorpendientes_remoto);
+                        tvpendiente.setTextColor(colortexto_remoto);
+                        tvatencion.setBackgroundColor(coloratenciones_remoto);
+                        tvatencion.setTextColor(colortexto_remoto);
+                        tvporentregar.setBackgroundColor(colorentregables_remoto);
+                        tvporentregar.setTextColor(colortexto_remoto);
+                        tventregadas.setBackgroundColor(colorentregadas_remoto);
+                        tventregadas.setTextColor(colortexto_remoto);
+                        tvanuladas.setBackgroundColor(coloranuladas_remoto);
+                        tvanuladas.setTextColor(colortexto_remoto);// Cerrar el diálogo solo si la contraseña no está vacía
+                    }
+                }
+            });
+        } else {
+            int configuracion = consulta_configuracion();
+            if (configuracion == 0) {
+                btnrecargar.setEnabled(false);
+                configdialog();
+            } else {
+                connect = connectionclass();
+                if (connect != null) {
+
+                    if (layout_historico == true) {
+                        consulta_historico();
+                        cl_estados.setVisibility(View.GONE);
+                        cl_estados_historicos.setVisibility(View.VISIBLE);
+                    } else {
+                        consulta();
+                        cl_estados.setVisibility(View.VISIBLE);
+                        cl_estados_historicos.setVisibility(View.GONE);
+                    }
+                    adapter.notifyDataSetChanged();
+                    onMapReady();
+
+                    btnrecargar.setEnabled(true);
+                } else {
+                    Toast.makeText(this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
+                }
+            }
+            tvpendiente.setBackgroundColor(colorpendientes_remoto);
+            tvpendiente.setTextColor(colortexto_remoto);
+            tvatencion.setBackgroundColor(coloratenciones_remoto);
+            tvatencion.setTextColor(colortexto_remoto);
+            tvporentregar.setBackgroundColor(colorentregables_remoto);
+            tvporentregar.setTextColor(colortexto_remoto);
+            tventregadas.setBackgroundColor(colorentregadas_remoto);
+            tventregadas.setTextColor(colortexto_remoto);
+            tvanuladas.setBackgroundColor(coloranuladas_remoto);
+            tvanuladas.setTextColor(colortexto_remoto);
+        }
+
+        menuFlotante.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Define un conjunto de restricciones para el estado expandido
+                ConstraintSet expandedConstraintSet = new ConstraintSet();
+                expandedConstraintSet.clone(constraintLayout); // Clona el estado actual
+                if (isExpanded[0]) {
+                    expandedConstraintSet.setVisibility(R.id.btnconexionflotante, ConstraintSet.INVISIBLE);
+                    expandedConstraintSet.setVisibility(R.id.tvconexion, ConstraintSet.INVISIBLE);
+                    expandedConstraintSet.setVisibility(R.id.btnfiltrosflotante, ConstraintSet.INVISIBLE);
+                    expandedConstraintSet.setVisibility(R.id.tvfiltros, ConstraintSet.INVISIBLE);
+                    expandedConstraintSet.setVisibility(R.id.btncoloresflotante, ConstraintSet.INVISIBLE);
+                    expandedConstraintSet.setVisibility(R.id.tvcolores, ConstraintSet.INVISIBLE);
+                    menuFlotante.setImageResource(R.drawable.recurso_1);
+                    Transition transition = new AutoTransition();
+                    transition.setDuration(300); // Duración de la animación en milisegundos
+
+                    // Aplica el conjunto de restricciones modificado con la animación
+                    TransitionManager.beginDelayedTransition(menuContenedorFlotante, transition);
+                    expandedConstraintSet.applyTo(menuContenedorFlotante);
+
+                    // Cambia el estado de expansión
+                    isExpanded[0] = !isExpanded[0];
+
+                } else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    //builder.setCancelable(false);
+                    // Inflar el diseño personalizado del AlertDialog
+                    LayoutInflater inflater = getLayoutInflater();
+                    View dialogView = inflater.inflate(R.layout.layout_password, null);
+                    builder.setView(dialogView);
+
+                    // Obtener referencias a elementos del diseño personalizado
+                    final EditText passwordEditText = dialogView.findViewById(R.id.passwordEditText);
+                    final ImageView showHidePassword = dialogView.findViewById(R.id.showHidePassword);
+                    final TextView titleTextView = dialogView.findViewById(R.id.titleTextView);
+
+                    // Configurar el título del AlertDialog desde Java
+                    titleTextView.setText("Ingrese su contraseña");
+
+                    // Configurar la EditText para ser de tipo contraseña y permitir ver u ocultar el texto
+                    passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                    showHidePassword.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            int inputType = passwordEditText.getInputType();
+                            if (inputType == (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD)) {
+                                passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+                            } else {
+                                passwordEditText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+                            }
+                            passwordEditText.setSelection(passwordEditText.getText().length()); // Colocar el cursor al final del texto
+                        }
+                    });
+
+                    // Configurar el botón de aceptar
+                    builder.setPositiveButton("Ingresar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                            String password = passwordEditText.getText().toString();
+
+                            if (!TextUtils.isEmpty(password)) {
+                                password_app_remoto = preferences.getString("passwordapp", "");
+                                if (password.equals(password_app_remoto)) {
+                                    alertDialogpassword.dismiss();
+                                    // Si no está expandido, muestra los elementos
+                                    expandedConstraintSet.setVisibility(R.id.btnconexionflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvconexion, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.btnfiltrosflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvfiltros, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.btncoloresflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvcolores, ConstraintSet.VISIBLE);
+                                    menuFlotante.setImageResource(R.drawable.abierto);
+                                    // Configura una animación de transición
+                                    Transition transition = new AutoTransition();
+                                    transition.setDuration(300); // Duración de la animación en milisegundos
+
+                                    // Aplica el conjunto de restricciones modificado con la animación
+                                    TransitionManager.beginDelayedTransition(menuContenedorFlotante, transition);
+                                    expandedConstraintSet.applyTo(menuContenedorFlotante);
+
+                                    // Cambia el estado de expansión
+                                    isExpanded[0] = !isExpanded[0];
+                                } else {
+                                    passwordEditText.setError("Contraseña Incorrecta");
+                                }
+
+                            } else {
+                                // La contraseña está vacía, mostrar un mensaje o tomar otra acción si es necesario
+                                //Toast.makeText(MainActivity.this, "La contraseña está vacía", Toast.LENGTH_SHORT).show();
+                                passwordEditText.setError("Ingrese Contraseña");
+                                // No cierres el diálogo aquí
+                            }
+                        }
+                    });
+
+                    // Crear y mostrar el AlertDialog
+                    alertDialogpassword = builder.create();
+                    alertDialogpassword.show();
+                    // Personalizar el comportamiento de cierre del diálogo
+                    alertDialogpassword.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String password = passwordEditText.getText().toString();
+
+                            if (!TextUtils.isEmpty(password)) {
+                                password_app_remoto = preferences.getString("passwordapp", "");
+                                if (password.equals(password_app_remoto)) {
+                                    alertDialogpassword.dismiss();
+                                    // Si no está expandido, muestra los elementos
+                                    expandedConstraintSet.setVisibility(R.id.btnconexionflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvconexion, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.btnfiltrosflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvfiltros, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.btncoloresflotante, ConstraintSet.VISIBLE);
+                                    expandedConstraintSet.setVisibility(R.id.tvcolores, ConstraintSet.VISIBLE);
+                                    menuFlotante.setImageResource(R.drawable.abierto);
+                                    // Configura una animación de transición
+                                    Transition transition = new AutoTransition();
+                                    transition.setDuration(300); // Duración de la animación en milisegundos
+
+                                    // Aplica el conjunto de restricciones modificado con la animación
+                                    TransitionManager.beginDelayedTransition(menuContenedorFlotante, transition);
+                                    expandedConstraintSet.applyTo(menuContenedorFlotante);
+
+                                    // Cambia el estado de expansión
+                                    isExpanded[0] = !isExpanded[0];
+                                } else {
+                                    //Toast.makeText(MainActivity.this, password, Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(MainActivity.this, password_app_remoto, Toast.LENGTH_SHORT).show();
+                                    passwordEditText.setError("Contraseña Incorrecta");
+                                }
+
+                            } else {
+                                // La contraseña está vacía, mostrar un mensaje o tomar otra acción si es necesario
+                                //Toast.makeText(MainActivity.this, "La contraseña está vacía", Toast.LENGTH_SHORT).show();
+                                passwordEditText.setError("Ingrese Contraseña");
+                                // No cierres el diálogo aquí
+                            }
+                        }
+                    });
+                }
+
+
             }
         });
-        //BOTON CONFIGURACION
-        ImageButton btnconfig = findViewById(R.id.btnconfig);
-        btnconfig.setOnClickListener(new View.OnClickListener() {
+        btnconexion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 configdialog();
             }
         });
-        //BOTON CAMBIAR COLOR
-        ImageButton cambiarcolor = findViewById(R.id.btncolor);
-        cambiarcolor.setOnClickListener(new View.OnClickListener() {
+        btnfiltros.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialogVistas();
+            }
+        });
+        btncolores.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 alertDialogColor();
             }
         });
 
-        int configuracion = consulta_configuracion();
-        if (configuracion == 0) {
-            btnrecargar.setEnabled(false);
-            configdialog();
-        } else {
-            connect = connectionclass();
-            if (connect != null) {
 
-                if (layout_historico==true){
-                    consulta_historico();
-                    cl_estados.setVisibility(View.GONE);
-                    cl_estados_historicos.setVisibility(View.VISIBLE);
-                }else {
-                    consulta();
-                    cl_estados.setVisibility(View.VISIBLE);
-                    cl_estados_historicos.setVisibility(View.GONE);
-                }
-                adapter.notifyDataSetChanged();
-                onMapReady();
-
-                btnrecargar.setEnabled(true);
-            } else {
-                Toast.makeText(this, "ERROR DE CONEXION", Toast.LENGTH_SHORT).show();
-            }
-        }
-        tvpendiente.setBackgroundColor(colorpendientes_remoto);
-        tvpendiente.setTextColor(colortexto_remoto);
-        tvatencion.setBackgroundColor(coloratenciones_remoto);
-        tvatencion.setTextColor(colortexto_remoto);
-        tvporentregar.setBackgroundColor(colorentregables_remoto);
-        tvporentregar.setTextColor(colortexto_remoto);
-        tventregadas.setBackgroundColor(colorentregadas_remoto);
-        tventregadas.setTextColor(colortexto_remoto);
-        tvanuladas.setBackgroundColor(coloranuladas_remoto);
-        tvanuladas.setTextColor(colortexto_remoto);
     }
     private void alertDialogColor() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -304,43 +621,101 @@ public class MainActivity extends AppCompatActivity {
         View customLayout = inflater.inflate(R.layout.layout_color, null); // Cambia aquí al diseño correcto
         builder.setView(customLayout);
         alertDialogColores = builder.create();
+        customLayout.findViewById(R.id.buttonYesdiseno).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String columnas_local = edtcolumnas.getText().toString();
+                String filas_local = edtfilas.getText().toString();
+                String ttexto_local = edtttexto.getText().toString();
+                String ttextoampli_local = edtttextoampli.getText().toString();
+                if (ttexto_local.isEmpty() || ttexto_local.equals("0")) {
+                    ttexto_local = "1";
+                }
+                ;
+                if (filas_local.isEmpty() || filas_local.equals("0")) {
+                    filas_local = "1";
+                }
+                ;
+                if (columnas_local.isEmpty() || columnas_local.equals("0")) {
+                    columnas_local = "1";
+                }
+                ;
+                if (ttextoampli_local.isEmpty() || ttextoampli_local.equals("0")) {
+                    ttextoampli_local = "1";
+                }
+                ;
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putInt("columnas", Integer.parseInt(columnas_local));
+                editor.putInt("filas", Integer.parseInt(filas_local));
+                editor.putInt("ttexto", Integer.parseInt(ttexto_local));
+                editor.putInt("ttextoampli", Integer.parseInt(ttextoampli_local));
+                editor.commit();
+
+                alertDialogColores.dismiss();
+
+                GridLayoutManager layoutManager = (GridLayoutManager) rv1.getLayoutManager();
+                layoutManager.setSpanCount(Integer.parseInt(columnas_local));
+
+
+                adapter.actualizarAlturaElemento(Integer.parseInt(filas_local));
+
+                if (layout_historico == true) {
+                    consulta_historico();
+                    cl_estados.setVisibility(View.GONE);
+                    cl_estados_historicos.setVisibility(View.VISIBLE);
+
+                } else {
+                    consulta();
+                    cl_estados.setVisibility(View.VISIBLE);
+                    cl_estados_historicos.setVisibility(View.GONE);
+                }
+                adapter.notifyDataSetChanged();
+            }
+        });
+        customLayout.findViewById(R.id.buttonNodiseno).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialogColores.dismiss();
+            }
+        });
+        if (alertDialogColores.getWindow() != null) {
+            alertDialogColores.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        }
+
+        // Después de inflar el diseño, busca los botones en el diseño correcto
+        pendientes = customLayout.findViewById(R.id.tvcolorpendiente);
+        atenciones = customLayout.findViewById(R.id.tvcoloratencion);
+        entregas = customLayout.findViewById(R.id.tvcolorporentregar);
+        colortexto = customLayout.findViewById(R.id.tvcolortexto);
+        entregadas = customLayout.findViewById(R.id.tvcolorentregada);
+        anuladas = customLayout.findViewById(R.id.tvcoloranulada);
+        cl_cambiacolor_historicos = customLayout.findViewById(R.id.layoutDialog2);
+        edtcolumnas = customLayout.findViewById(R.id.edtcolumnas);
+        edtfilas = customLayout.findViewById(R.id.edtfilas);
+        edtttexto = customLayout.findViewById(R.id.edtttexto);
+        edtttextoampli = customLayout.findViewById(R.id.edtttextoampli);
+        columnas = preferences.getInt("columnas", 1);
+        filas = preferences.getInt("filas", 1);
+        ttexto = preferences.getInt("ttexto", 14);
+        ttextoampli = preferences.getInt("ttextoampli", 14);
+        colorpendientes_remoto = preferences.getInt("colorpendientes", 0xFFFF9900);
+        coloratenciones_remoto = preferences.getInt("coloratenciones", 0xFFFFFF00);
+        colorentregables_remoto = preferences.getInt("colorentergables", 0xFF00FF00);
+        colorentregadas_remoto = preferences.getInt("colorentregadas", 0xFFFF9900);
+        coloranuladas_remoto = preferences.getInt("coloranuladas", 0xFFFFFF00);
+        colortexto_remoto = preferences.getInt("colorentergables", 0xFF252850);
+        edtcolumnas.setText(String.valueOf(columnas));
+        edtfilas.setText(String.valueOf(filas));
+        edtttexto.setText(String.valueOf(ttexto));
+        edtttextoampli.setText(String.valueOf(ttextoampli));
+        pendientes.setBackgroundColor(colorpendientes_remoto);
+        atenciones.setBackgroundColor(coloratenciones_remoto);
+        entregas.setBackgroundColor(colorentregables_remoto);
+        colortexto.setBackgroundColor(colortexto_remoto);
+        entregadas.setBackgroundColor(colorentregadas_remoto);
+        anuladas.setBackgroundColor(coloranuladas_remoto);
 
         alertDialogColores.show();
-        // Después de inflar el diseño, busca los botones en el diseño correcto
-        pendientes = customLayout.findViewById(R.id.btnpendiente);
-        atenciones = customLayout.findViewById(R.id.btnatencion);
-        entregas = customLayout.findViewById(R.id.btnentrega);
-        colortexto = customLayout.findViewById(R.id.btncolortexto);
-        entregadas=customLayout.findViewById(R.id.btnentregadas);
-        anuladas=customLayout.findViewById(R.id.btnanuladas);
-        cl_cambiacolor_historicos=customLayout.findViewById(R.id.layoutDialog2);
-TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_color);
-// Obtén una referencia a los parámetros de diseño del TextView
-        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) textTitle_layout_color.getLayoutParams();
-
-// Establece el nuevo valor del atributo app:layout_constraintBottom_toTopOf
-
-
-// Aplica los cambios a los parámetros de diseño del TextView
-
-        if (layout_historico==true){
-            pendientes.setVisibility(View.GONE);
-            atenciones.setVisibility(View.GONE);
-            entregas.setVisibility(View.GONE);
-            colortexto.setVisibility(View.GONE);
-            entregadas.setVisibility(View.VISIBLE);
-            anuladas.setVisibility(View.VISIBLE);
-            params.bottomToTop = R.id.btnentregadas;
-        }else {
-            pendientes.setVisibility(View.VISIBLE);
-            atenciones.setVisibility(View.VISIBLE);
-            entregas.setVisibility(View.VISIBLE);
-            colortexto.setVisibility(View.VISIBLE);
-            entregadas.setVisibility(View.GONE);
-            anuladas.setVisibility(View.GONE);
-            params.bottomToTop = R.id.btnpendiente;
-        }
-        textTitle_layout_color.setLayoutParams(params);
         pendientes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -382,11 +757,15 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         }
     }
     private void alertDialogVistas() {
-        checkpendiente_remoto=preferences.getBoolean("checkpendiente",false);
-        checkatencion_remoto=preferences.getBoolean("checkatencion",false);
-        checkentregado_remoto=preferences.getBoolean("checkentregado",false);
-        checkDT_remoto=preferences.getBoolean("checkDT",false);
-        checkTI_remoto=preferences.getBoolean("checkTI",false);
+        checkpendiente_remoto = preferences.getBoolean("checkpendiente", true);
+        checkatencion_remoto = preferences.getBoolean("checkatencion", true);
+        checkentregado_remoto = preferences.getBoolean("checkentregado", true);
+        checkentregadas_remoto = preferences.getBoolean("checkentregadas", true);
+        checkanuladas_remoto = preferences.getBoolean("checkanuladas", true);
+        checkDT_remoto = preferences.getBoolean("checkDT", true);
+        checkTI_remoto = preferences.getBoolean("checkTI", true);
+        checkbloqueoestado_remoto = preferences.getBoolean("checkbloqueoestado", true);
+        checkbloqueoanulacion_remoto = preferences.getBoolean("checkbloqueoanulacion", true);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -397,45 +776,61 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         checkpendiente = customLayout.findViewById(R.id.checkpendiente);
         checkatencion = customLayout.findViewById(R.id.checkatencion);
         checkentregado = customLayout.findViewById(R.id.checkentregado);
-        checkTI=customLayout.findViewById(R.id.checkTI);
-        checkDT=customLayout.findViewById(R.id.checkDT);
+        checkentregadas = customLayout.findViewById(R.id.checkentregadas);
+        checkanuladas = customLayout.findViewById(R.id.checkanuladas);
+        checkTI = customLayout.findViewById(R.id.checkTI);
+        checkDT = customLayout.findViewById(R.id.checkDT);
+        checkbloqueoestado = customLayout.findViewById(R.id.checkbloqueoestado);
+        checkbloqueoanulacion = customLayout.findViewById(R.id.checkbloqueoanulacion);
 
         checkpendiente.setChecked(checkpendiente_remoto);
         checkatencion.setChecked(checkatencion_remoto);
         checkentregado.setChecked(checkentregado_remoto);
+        checkentregadas.setChecked(checkentregadas_remoto);
+        checkanuladas.setChecked(checkanuladas_remoto);
+        checkbloqueoestado.setChecked(checkbloqueoestado_remoto);
+        checkbloqueoanulacion.setChecked(checkbloqueoanulacion_remoto);
         checkTI.setChecked(checkTI_remoto);
         checkDT.setChecked(checkDT_remoto);
+
 
         final AlertDialog alertDialogVistas = builder.create();
         customLayout.findViewById(R.id.buttonYesvista).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Boolean checkpendiente_local=checkpendiente.isChecked();
-                Boolean checkatencion_local=checkatencion.isChecked();
-                Boolean checkentregado_local=checkentregado.isChecked();
-                Boolean checkTI_local=checkTI.isChecked();
-                Boolean checkDT_local=checkDT.isChecked();
+                Boolean checkpendiente_local = checkpendiente.isChecked();
+                Boolean checkatencion_local = checkatencion.isChecked();
+                Boolean checkentregado_local = checkentregado.isChecked();
+                Boolean checkentregadas_local = checkentregadas.isChecked();
+                Boolean checkanuladas_local = checkanuladas.isChecked();
+                Boolean checkbloqueoestado_local = checkbloqueoestado.isChecked();
+                Boolean checkbloqueoanulacion_local = checkbloqueoanulacion.isChecked();
+                Boolean checkTI_local = checkTI.isChecked();
+                Boolean checkDT_local = checkDT.isChecked();
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.putBoolean("checkpendiente",checkpendiente_local);
-                editor.putBoolean("checkatencion",checkatencion_local);
-                editor.putBoolean("checkentregado",checkentregado_local);
-                editor.putBoolean("checkTI",checkTI_local);
-                editor.putBoolean("checkDT",checkDT_local);
+                editor.putBoolean("checkpendiente", checkpendiente_local);
+                editor.putBoolean("checkatencion", checkatencion_local);
+                editor.putBoolean("checkentregado", checkentregado_local);
+                editor.putBoolean("checkentregadas", checkentregadas_local);
+                editor.putBoolean("checkanuladas", checkanuladas_local);
+                editor.putBoolean("checkbloqueoestado", checkbloqueoestado_local);
+                editor.putBoolean("checkbloqueoanulacion", checkbloqueoanulacion_local);
+                editor.putBoolean("checkTI", checkTI_local);
+                editor.putBoolean("checkDT", checkDT_local);
                 editor.commit();
                 alertDialogVistas.dismiss();
 
-                if (layout_historico==true){
+                if (layout_historico == true) {
                     consulta_historico();
                     cl_estados.setVisibility(View.GONE);
                     cl_estados_historicos.setVisibility(View.VISIBLE);
-                }else {
+
+                } else {
                     consulta();
                     cl_estados.setVisibility(View.VISIBLE);
                     cl_estados_historicos.setVisibility(View.GONE);
                 }
                 adapter.notifyDataSetChanged();
-
-
             }
         });
         customLayout.findViewById(R.id.buttonNovista).setOnClickListener(new View.OnClickListener() {
@@ -484,18 +879,19 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                         switch (objeto) {
                             case 1:
                                 tvpendiente.setBackgroundColor(selectedColor);
-
+                                pendientes.setBackgroundColor(selectedColor);
                                 editor.putInt("colorpendientes", selectedColor);
 
                                 break;
                             case 2:
                                 tvatencion.setBackgroundColor(selectedColor);
-
+                                atenciones.setBackgroundColor(selectedColor);
                                 editor.putInt("coloratenciones", selectedColor);
 
                                 break;
                             case 3:
                                 tvporentregar.setBackgroundColor(selectedColor);
+                                entregas.setBackgroundColor(selectedColor);
                                 editor.putInt("colorentregables", selectedColor);
 
                                 break;
@@ -505,14 +901,17 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                                 tvpendiente.setTextColor(selectedColor);
                                 tvanuladas.setTextColor(selectedColor);
                                 tventregadas.setTextColor(selectedColor);
+                                colortexto.setBackgroundColor(selectedColor);
                                 editor.putInt("colortexto", selectedColor);
                                 break;
                             case 5:
                                 tventregadas.setBackgroundColor(selectedColor);
+                                entregadas.setBackgroundColor(selectedColor);
                                 editor.putInt("colorentregadas",selectedColor);
                                 break;
                             case 6:
                                 tvanuladas.setBackgroundColor(selectedColor);
+                                anuladas.setBackgroundColor(selectedColor);
                                 editor.putInt("coloranuladas",selectedColor);
                                 break;
                         }
@@ -526,6 +925,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                             cl_estados.setVisibility(View.VISIBLE);
                             cl_estados_historicos.setVisibility(View.GONE);
                         }
+
                         adapter.notifyDataSetChanged();
 
                     }
@@ -539,6 +939,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 .show();
     }
     public int consulta_configuracion() {
+
         servidor_remoto = preferences.getString("servidor", "");
         puerto_remoto = preferences.getString("puerto", "");
         DB_remoto = preferences.getString("DB", "");
@@ -548,14 +949,20 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         colorpendientes_remoto = preferences.getInt("colorpendientes", 0xFFFF9900);
         coloratenciones_remoto = preferences.getInt("coloratenciones", 0xFFFFFF00);
         colorentregables_remoto = preferences.getInt("colorentergables", 0xFF00FF00);
-        colorentregadas_remoto=preferences.getInt("colorentregadas",0xFFFF9900);
-        coloranuladas_remoto=preferences.getInt("coloranuladas",0xFFFFFF00);
+        colorentregadas_remoto = preferences.getInt("colorentregadas", 0xFFFF9900);
+        coloranuladas_remoto = preferences.getInt("coloranuladas", 0xFFFFFF00);
         colortexto_remoto = preferences.getInt("colorentergables", 0xFF252850);
-        checkpendiente_remoto =preferences.getBoolean("checkpendiente",true);
-        checkatencion_remoto =preferences.getBoolean("checkatencion",true);
-        checkentregado_remoto =preferences.getBoolean("checkentregado",true);
-        checkTI_remoto =preferences.getBoolean("checkTI",true);
-        checkDT_remoto =preferences.getBoolean("checkDT",true);
+        ttexto_remoto = preferences.getInt("ttexto", 14);
+        ttextoampli_remoto = preferences.getInt("ttextoampli", 14);
+        columnas = preferences.getInt("columnas", 1);
+        filas = preferences.getInt("filas", 1);
+        checkpendiente_remoto = preferences.getBoolean("checkpendiente", true);
+        checkatencion_remoto = preferences.getBoolean("checkatencion", true);
+        checkentregado_remoto = preferences.getBoolean("checkentregado", true);
+        checkTI_remoto = preferences.getBoolean("checkTI", true);
+        checkDT_remoto = preferences.getBoolean("checkDT", true);
+        checkbloqueoestado_remoto=preferences.getBoolean("checkbloqueoestado",true);
+        checkbloqueoanulacion_remoto=preferences.getBoolean("checkbloqueoanulacion",true);
         if (servidor_remoto == "") {
             Toast.makeText(this, "CONFIGURE CONEXIÓN", Toast.LENGTH_LONG).show();
             return 0;
@@ -606,39 +1013,47 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
     }
     public void consulta_historico() {
 
-        checkentregada_remoto=preferences.getBoolean("checkentregada",true);
-        checkanulada_remoto=preferences.getBoolean("checkanulada",true);
+        checkentregadas_remoto=preferences.getBoolean("checkentregadas",true);
+        checkanuladas_remoto=preferences.getBoolean("checkanuladas",true);
         checkDT_remoto_historico=preferences.getBoolean("checkDT",true);
         checkTI_remoto_historico=preferences.getBoolean("checkTI",true);
         try {
             connect = connectionclass();
             if (connect != null) {
-                String query = "SELECT * FROM Comandas_hist";
-                String queryorigen="";
+                String query = "SELECT TOP 20 * FROM Comandas_hist ";
+                String queryorigen = "";
                 List<String> condiciones = new ArrayList<>();
-                if (checkentregada_remoto.booleanValue()==true) {
+                if (checkentregadas_remoto.booleanValue() == true) {
                     condiciones.add("estado = '4'");
                 }
-                if (checkanulada_remoto.booleanValue()==true) {
+                if (checkanuladas_remoto.booleanValue() == true) {
                     condiciones.add("estado = 'X'");
                 }
-                if (checkTI_remoto_historico.booleanValue()==true && checkDT_remoto_historico.booleanValue()==true){
-                    queryorigen="";
-                } else if (checkTI_remoto_historico.booleanValue()==true) {
-                    queryorigen="AND origen = 'TI' ";
-                } else if (checkDT_remoto_historico.booleanValue()==true) {
-                    queryorigen="AND origen = 'DT' ";
-                }else{
-                    queryorigen="";
+                if (checkTI_remoto_historico.booleanValue() == true && checkDT_remoto_historico.booleanValue() == true) {
+                    queryorigen = "";
+                } else if (checkTI_remoto_historico.booleanValue() == true) {
+                    queryorigen = "AND origen = 'TI' ";
+                } else if (checkDT_remoto_historico.booleanValue() == true) {
+                    queryorigen = "AND origen = 'DT' ";
+                } else {
+                    queryorigen = "AND origen<> 'TI' AND origen <> 'DT'";
                 }
                 if (!condiciones.isEmpty()) {
                     String condicionesSql = TextUtils.join(" OR ", condiciones);
                     query += " WHERE (" + condicionesSql + ") ";
+                } else {
+
+                    condiciones.add("estado <> 'X'");
+                    condiciones.add("estado <> '4'");
+                    String condicionesSql = TextUtils.join(" AND ", condiciones);
+                    query += " WHERE (" + condicionesSql + ") ";
+
                 }
-                if (!queryorigen.isEmpty()){
-                    query +=queryorigen;
+                if (!queryorigen.isEmpty()) {
+                    query += queryorigen;
                 }
                 query += " ORDER BY  fecHora DESC";
+                Log.e("QHERY", query);
                 Statement statement = connect.createStatement();
                 ResultSet resultSet = statement.executeQuery(query);
                 List comandalist = new ArrayList();
@@ -686,31 +1101,26 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                         Collections.addAll(itemList, jsonitem.substring(1, jsonitem.length() - 1));
                         JSONArray itemroot = new JSONArray(itemList.toString().replaceAll("[^\\x00-\\x7F]", ""));
 
-                        String cadena="";
-                        cadena =cadena +
-                                System.getProperty("line.separator") +"   Fecha:                    " + fecha + System.getProperty("line.separator") +
+                        String cadena = "";
+                        cadena = cadena +
+                                System.getProperty("line.separator") + "   Fecha:                    " + fecha + System.getProperty("line.separator") +
                                 "   Documento:          " + correlativo + System.getProperty("line.separator") +
                                 System.getProperty("line.separator") +
-                                "   Cantidad                                  Descripción" + System.getProperty("line.separator") +
-                                "_________________________________________________________"
+                                "   Cantidad                 Descripción" + System.getProperty("line.separator") +
+                                "______________________________________________"
                         ;
                         for (int u = 0; u < itemroot.length(); u++) {
                             JSONObject itemjsonObject = itemroot.getJSONObject(u);
-                            //String cdarticulo = itemjsonObject.getString("CDARTICULO");
                             String cantidad = itemjsonObject.getString("CANTIDAD");
                             String descripcion = itemjsonObject.getString("DSARTICULO");
                             cadena = cadena + System.getProperty("line.separator") +
-                                    "        " + cantidad +
-                                    "                    " + descripcion;
+                                    "      " + cantidad +
+                                    "        " + descripcion;
                             String tipopan = itemjsonObject.getString("TIPOPAN");
-                            if (tipopan.length() < 1) {
-                                Log.d("TIPOPANVACIO", String.valueOf(tipopan.length()));
-                            } else {
-                                Log.d("TIPOPANLLENO", String.valueOf(tipopan.length()));
+                            if (tipopan.length() >= 1) {
                                 cadena = cadena + System.getProperty("line.separator");
                                 cadena = cadena +
-                                        "                          " +
-                                        "                " + tipopan;
+                                        "                            " + tipopan;
                             }
                             try {
                                 String jsondetalle = itemjsonObject.getString("COMENTARIOS");
@@ -722,8 +1132,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                                     JSONObject detallejsonObject = detalleroot.getJSONObject(d);
                                     String comentarios = detallejsonObject.getString("COMENT");
                                     cadena = cadena + System.getProperty("line.separator") +
-                                            "                          " +
-                                            "                " + comentarios;
+                                            "                            " + comentarios;
                                 }
                             } catch (Throwable e) {
                                 Log.d("ERRORCOMENTARIO", e.getMessage());
@@ -731,7 +1140,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                             cadena = cadena + System.getProperty("line.separator");
                         }
                         ;
-                        cadena = cadena + "_________________________________________________________" +
+                        cadena = cadena + "______________________________________________" +
                                 System.getProperty("line.separator") +
                                 "   ** Comentarios **" +
                                 System.getProperty("line.separator") +
@@ -750,43 +1159,57 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
     }
     public void consulta() {
 
-        checkpendiente_remoto=preferences.getBoolean("checkpendiente",false);
-        checkatencion_remoto=preferences.getBoolean("checkatencion",false);
-        checkentregado_remoto=preferences.getBoolean("checkentregado",false);
-        checkDT_remoto=preferences.getBoolean("checkDT",false);
-        checkTI_remoto=preferences.getBoolean("checkTI",false);
+        checkpendiente_remoto = preferences.getBoolean("checkpendiente", false);
+        checkatencion_remoto = preferences.getBoolean("checkatencion", false);
+        checkentregado_remoto = preferences.getBoolean("checkentregado", false);
+        checkbloqueoestado_remoto = preferences.getBoolean("checkbloqueoestado", false);
+        checkbloqueoanulacion_remoto = preferences.getBoolean("checkbloqueoanulacion", false);
+        checkanuladas_remoto = preferences.getBoolean("checkanuladas", false);
+        checkentregadas_remoto = preferences.getBoolean("checkentregadas", false);
+        checkDT_remoto = preferences.getBoolean("checkDT", false);
+        checkTI_remoto = preferences.getBoolean("checkTI", false);
         try {
             connect = connectionclass();
             if (connect != null) {
                 String query = "SELECT * FROM Comandas";
-                String queryorigen="";
+                String queryorigen = "";
                 List<String> condiciones = new ArrayList<>();
-                if (checkpendiente_remoto.booleanValue()==true) {
+                if (checkpendiente_remoto.booleanValue() == true) {
                     condiciones.add("estado = '1'");
                 }
-                if (checkatencion_remoto.booleanValue()==true) {
+                if (checkatencion_remoto.booleanValue() == true) {
                     condiciones.add("estado = '2'");
                 }
-                if (checkentregado_remoto.booleanValue()==true) {
+                if (checkentregado_remoto.booleanValue() == true) {
                     condiciones.add("estado = '3'");
                 }
-                if (checkTI_remoto.booleanValue()==true && checkDT_remoto.booleanValue()==true){
-                    queryorigen="";
-                } else if (checkTI_remoto.booleanValue()==true) {
-                    queryorigen="AND origen = 'TI' ";
-                } else if (checkDT_remoto.booleanValue()==true) {
-                    queryorigen="AND origen = 'DT' ";
-                }else{
-                    queryorigen="";
+
+                if (checkTI_remoto.booleanValue() == true && checkDT_remoto.booleanValue() == true) {
+                    queryorigen = "";
+                } else if (checkTI_remoto.booleanValue() == true && checkDT_remoto.booleanValue() == false) {
+                    queryorigen = "AND origen = 'TI' ";
+                } else if (checkDT_remoto.booleanValue() == true && checkTI_remoto.booleanValue() == false) {
+                    queryorigen = "AND origen = 'DT' ";
+                } else {
+                    queryorigen = "AND origen<> 'TI' AND origen <> 'DT'";
                 }
                 if (!condiciones.isEmpty()) {
                     String condicionesSql = TextUtils.join(" OR ", condiciones);
                     query += " WHERE (" + condicionesSql + ") ";
+                } else {
+
+                    condiciones.add("estado <> '1'");
+                    condiciones.add("estado <> '2'");
+                    condiciones.add("estado <> '3'");
+                    String condicionesSql = TextUtils.join(" AND ", condiciones);
+                    query += " WHERE (" + condicionesSql + ") ";
+
                 }
-                if (!queryorigen.isEmpty()){
-                    query +=queryorigen;
+                if (!queryorigen.isEmpty()) {
+                    query += queryorigen;
                 }
                 query += " ORDER BY estado DESC, fecdocumento ASC";
+                Log.e("SQL", query);
                 Statement statement = connect.createStatement();
                 ResultSet resultSet = statement.executeQuery(query);
                 List comandalist = new ArrayList();
@@ -834,31 +1257,26 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                         Collections.addAll(itemList, jsonitem.substring(1, jsonitem.length() - 1));
                         JSONArray itemroot = new JSONArray(itemList.toString().replaceAll("[^\\x00-\\x7F]", ""));
 
-                        String cadena="";
-                        cadena =cadena +
-                                System.getProperty("line.separator") +"   Fecha:                    " + fecha + System.getProperty("line.separator") +
-                                        "   Documento:          " + correlativo + System.getProperty("line.separator") +
-                                        System.getProperty("line.separator") +
-                                        "   Cantidad                                  Descripción" + System.getProperty("line.separator") +
-                                        "_________________________________________________________"
-                                ;
+                        String cadena = "";
+                        cadena = cadena +
+                                System.getProperty("line.separator") + "   Fecha:                    " + fecha + System.getProperty("line.separator") +
+                                "   Documento:          " + correlativo + System.getProperty("line.separator") +
+                                System.getProperty("line.separator") +
+                                "   Cantidad                 Descripción" + System.getProperty("line.separator") +
+                                "______________________________________________"
+                        ;
                         for (int u = 0; u < itemroot.length(); u++) {
                             JSONObject itemjsonObject = itemroot.getJSONObject(u);
-                            //String cdarticulo = itemjsonObject.getString("CDARTICULO");
                             String cantidad = itemjsonObject.getString("CANTIDAD");
                             String descripcion = itemjsonObject.getString("DSARTICULO");
                             cadena = cadena + System.getProperty("line.separator") +
-                                    "        " + cantidad +
-                                    "                    " + descripcion;
+                                    "      " + cantidad +
+                                    "        " + descripcion;
                             String tipopan = itemjsonObject.getString("TIPOPAN");
-                            if (tipopan.length() < 1) {
-                                Log.d("TIPOPANVACIO", String.valueOf(tipopan.length()));
-                            } else {
-                                Log.d("TIPOPANLLENO", String.valueOf(tipopan.length()));
+                            if (tipopan.length() >= 1) {
                                 cadena = cadena + System.getProperty("line.separator");
                                 cadena = cadena +
-                                        "                          " +
-                                        "                " + tipopan;
+                                        "                            " + tipopan;
                             }
                             try {
                                 String jsondetalle = itemjsonObject.getString("COMENTARIOS");
@@ -870,8 +1288,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                                     JSONObject detallejsonObject = detalleroot.getJSONObject(d);
                                     String comentarios = detallejsonObject.getString("COMENT");
                                     cadena = cadena + System.getProperty("line.separator") +
-                                            "                          " +
-                                            "                " + comentarios;
+                                            "                            " + comentarios;
                                 }
                             } catch (Throwable e) {
                                 Log.d("ERRORCOMENTARIO", e.getMessage());
@@ -879,7 +1296,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                             cadena = cadena + System.getProperty("line.separator");
                         }
                         ;
-                        cadena = cadena + "_________________________________________________________" +
+                        cadena = cadena + "______________________________________________" +
                                 System.getProperty("line.separator") +
                                 "   ** Comentarios **" +
                                 System.getProperty("line.separator") +
@@ -895,94 +1312,6 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-    public String consultaid(int id) {
-        connect = connectionclass();
-        if (connect != null) {
-            String query = "Select * from Comandas where id=" + String.valueOf(id);
-            Statement statement = null;
-            try {
-                statement = connect.createStatement();
-                ResultSet resultSet = statement.executeQuery(query);
-                while (resultSet.next()) {
-                    String json = resultSet.getString("jsonComanda");
-                    List myList = new ArrayList();
-                    myList.clear();
-                    Collections.addAll(myList, json);
-                    JSONArray root = new JSONArray(myList.toString().replaceAll("[^\\x00-\\x7F]", ""));
-                    for (int i = 0; i < root.length(); i++) {
-                        JSONObject jsonObject = root.getJSONObject(i);
-                        String centroemisor = jsonObject.getString("centroemisor");
-                        String serie = jsonObject.getString("nrodocumento").substring(0, 3);
-                        String nro = jsonObject.getString("nrodocumento").substring(3, 12);
-                        String correlativo = centroemisor + "-" + serie + "-" + nro;
-                        String fecha = jsonObject.getString("fecdocumento");
-                        String comentario = jsonObject.getString("comentario");
-                        String jsonitem = jsonObject.getString("Items");
-                        List itemList = new ArrayList();
-                        itemList.clear();
-                        Collections.addAll(itemList, jsonitem.substring(1, jsonitem.length() - 1));
-                        JSONArray itemroot = new JSONArray(itemList.toString().replaceAll("[^\\x00-\\x7F]", ""));
-                        String cadena = System.getProperty("line.separator") +System.getProperty("line.separator") +
-                                "   Fecha:                              " + fecha + System.getProperty("line.separator") +
-                                System.getProperty("line.separator") +
-                                "   Documento:                    " + correlativo + System.getProperty("line.separator") +
-                                System.getProperty("line.separator") +
-                                "   Cantidad                                  Descripción" +
-                                System.getProperty("line.separator") +
-                                "____________________________________________________________";
-                        for (int u = 0; u < itemroot.length(); u++) {
-                            JSONObject itemjsonObject = itemroot.getJSONObject(u);
-                            //String cdarticulo = itemjsonObject.getString("CDARTICULO");
-                            String cantidad = itemjsonObject.getString("CANTIDAD");
-                            String descripcion = itemjsonObject.getString("DSARTICULO");
-                            cadena = cadena + System.getProperty("line.separator") +
-                                    "        " + cantidad +
-                                    "                    " + descripcion;
-                            String tipopan = itemjsonObject.getString("TIPOPAN");
-                            if (tipopan.length() < 1) {
-                                Log.d("TIPOPANVACIO", String.valueOf(tipopan.length()));
-                            } else {
-                                Log.d("TIPOPANLLENO", String.valueOf(tipopan.length()));
-                                cadena = cadena + System.getProperty("line.separator");
-                                cadena = cadena +
-                                        "                          " +
-                                        "                " + tipopan;
-                            }
-                            try {
-                                String jsondetalle = itemjsonObject.getString("COMENTARIOS");
-                                Log.d("EXISTECOMENTARIO", jsondetalle);
-                                List detalleList = new ArrayList();
-                                itemList.clear();
-                                Collections.addAll(detalleList, jsondetalle.substring(1, jsondetalle.length() - 1));
-                                JSONArray detalleroot = new JSONArray(detalleList.toString().replaceAll("[^\\x00-\\x7F]", ""));
-                                for (int d = 0; d < detalleroot.length(); d++) {
-                                    JSONObject detallejsonObject = detalleroot.getJSONObject(d);
-                                    String comentarios = detallejsonObject.getString("COMENT");
-                                    cadena = cadena + System.getProperty("line.separator") +
-                                            "                          " +
-                                            "                " + comentarios;
-                                }
-                            } catch (Throwable e) {
-                                Log.d("ERRORCOMENTARIO", e.getMessage());
-                            }
-                            cadena = cadena + System.getProperty("line.separator");
-                        }
-                        ;
-                        cadena = cadena + "____________________________________________________________" +
-                                System.getProperty("line.separator") +
-                                "       ** Comentarios **" +
-                                System.getProperty("line.separator") +
-                                "       " + comentario;
-                        return cadena;
-                    }
-                }
-                connect.close();
-            } catch (SQLException | JSONException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return "no existe";
     }
     public void updateestado(int id, String nuevoestado) {
         try {
@@ -1035,6 +1364,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         }
     }
     public void alertdialog(int id, int estado, String numero, String fecha) {
+
         int nuevoestado = estado + 1;
 
         String mensajeestadoactual = "";
@@ -1069,24 +1399,24 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 "Estado Actual: " + mensajeestadoactual
                 + System.getProperty("line.separator") +
                 "Estado Nuevo: " + mensajeestadonuevo);
-        ((Button) view.findViewById(R.id.buttonYes)).setText("Cambiar");
-        ((Button) view.findViewById(R.id.buttonNo)).setText("ANULAR");
+
+
         ((ImageView) view.findViewById(R.id.imageIcon)).setImageResource(R.drawable.ic_question);
         alertDialog2 = builder.create();
-        view.findViewById(R.id.buttonYes).requestFocus();
-        view.findViewById(R.id.buttonYes).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.btncambiar).requestFocus();
+        view.findViewById(R.id.btncambiar).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 alertDialog2.dismiss();
-                if (estado == 3) {
-                    alertDialog1.dismiss();
-                }
+
+                alertDialog1.dismiss();
+
                 updateestado(id, String.valueOf(nuevoestado));
-                if (layout_historico==true){
+                if (layout_historico == true) {
                     consulta_historico();
                     cl_estados.setVisibility(View.GONE);
                     cl_estados_historicos.setVisibility(View.VISIBLE);
-                }else {
+                } else {
                     consulta();
                     cl_estados.setVisibility(View.VISIBLE);
                     cl_estados_historicos.setVisibility(View.GONE);
@@ -1094,17 +1424,17 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 adapter.notifyDataSetChanged();
             }
         });
-        view.findViewById(R.id.buttonNo).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.btnanular).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 alertDialog2.dismiss();
                 alertDialog1.dismiss();
                 updateestado(id, "X");
-                if (layout_historico==true){
+                if (layout_historico == true) {
                     consulta_historico();
                     cl_estados.setVisibility(View.GONE);
                     cl_estados_historicos.setVisibility(View.VISIBLE);
-                }else {
+                } else {
                     consulta();
                     cl_estados.setVisibility(View.VISIBLE);
                     cl_estados_historicos.setVisibility(View.GONE);
@@ -1112,6 +1442,14 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 adapter.notifyDataSetChanged();
             }
         });
+        checkbloqueoestado_remoto = preferences.getBoolean("checkbloqueoestado", true);
+        checkbloqueoanulacion_remoto = preferences.getBoolean("checkbloqueoanulacion", true);
+        if (checkbloqueoestado_remoto == false) {
+            view.findViewById(R.id.btncambiar).setVisibility(View.GONE);
+        }
+        if (checkbloqueoanulacion_remoto == false) {
+            view.findViewById(R.id.btnanular).setVisibility(View.GONE);
+        }
         alertDialog2.setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override
             public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
@@ -1133,12 +1471,15 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
     }
     @SuppressLint("MissingInflatedId")
     public void configdialog() {
+        float pulgadas = TextSizeAdjuster.getScreenSizeInInches(this);
+        float resolucionW = TextSizeAdjuster.getScreenWidth(this);
+        float resolucionH = TextSizeAdjuster.getScreenHeight(this);
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.ConfigDialogTheme);
         View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.layout_configuracion,
                 (ConstraintLayout) findViewById(R.id.layoutDialogConfiguracion)
         );
         builder.setView(view);
-        ((TextView) view.findViewById(R.id.textTitle)).setText("Configuración de Conexión " + System.getProperty("line.separator") + "Ancho: " + ancho + " Alto: " + alto);
+        ((TextView) view.findViewById(R.id.textTitle)).setText("Configuración de Conexión ");
         ((TextView) view.findViewById(R.id.textServidor)).setText("IP del Servidor");
         ((TextView) view.findViewById(R.id.textDatabase)).setText("Nombre de la base de datos");
         ((TextView) view.findViewById(R.id.textPuerto)).setText("Puerto de Conexión");
@@ -1252,35 +1593,8 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         TextView comandapersonal = customLayout.findViewById(R.id.textViewComandaPersonal);
         comandapersonal.setMovementMethod(new ScrollingMovementMethod());
         comandapersonal.setText(lista1.get(selectedPosition));
-
-
-        comandapersonal.setOnTouchListener(new View.OnTouchListener() {
-            private GestureDetector gestureDetector = new GestureDetector(MainActivity.this, new GestureDetector.SimpleOnGestureListener() {
-                @Override
-                public boolean onDoubleTap(MotionEvent e) {
-                    // Manejar el doble toque aquí
-                    int id = lista2.get(selectedPosition);
-                    int estado = Integer.parseInt(listaestado.get(selectedPosition));
-                    String fecha = listafecha.get(selectedPosition);
-                    String numero = listanumero.get(selectedPosition);
-                    alertdialog(id, estado, numero, fecha);
-                    return true;
-                }
-            });
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                boolean consumed = gestureDetector.onTouchEvent(event);
-
-                if (!consumed) {
-                    // Si no se consumió el evento, permitir que el ScrollView lo maneje
-                    return false;
-                } else {
-                    // Si se consumió el evento, retornar true para indicar que fue manejado
-                    return true;
-                }
-            }
-        });
+        ttextoampli_remoto = preferences.getInt("ttextoampli", 14);
+        comandapersonal.setTextSize(ttextoampli_remoto);
         alertDialog1.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
@@ -1295,34 +1609,78 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 }
             }
         });
-        alertDialog1.setOnKeyListener(new DialogInterface.OnKeyListener() {
-            @Override
-            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                switch (keyCode) {
-                    case KeyEvent.KEYCODE_ENTER:
-                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+        if (layout_historico == false) {
+            checkbloqueoestado_remoto = preferences.getBoolean("checkbloqueoestado", true);
+            checkbloqueoanulacion_remoto = preferences.getBoolean("checkbloqueoanulacion", true);
+
+            comandapersonal.setOnTouchListener(new View.OnTouchListener() {
+                private GestureDetector gestureDetector = new GestureDetector(MainActivity.this, new GestureDetector.SimpleOnGestureListener() {
+                    @Override
+                    public boolean onDoubleTap(MotionEvent e) {
+                        if (checkbloqueoestado_remoto == false && checkbloqueoanulacion_remoto == false) {
+                            Toast.makeText(MainActivity.this, "Modificaciones Bloqueadas", Toast.LENGTH_SHORT);
+                            return false;
+                        } else {
+                            // Manejar el doble toque aquí
                             int id = lista2.get(selectedPosition);
                             int estado = Integer.parseInt(listaestado.get(selectedPosition));
                             String fecha = listafecha.get(selectedPosition);
                             String numero = listanumero.get(selectedPosition);
                             alertdialog(id, estado, numero, fecha);
+                            return true;
                         }
-                        break;
-                    case 0:
-                        if (alertDialog1 != null && alertDialog1.isShowing()) {
-                            alertDialog1.dismiss();
-                        }
-                        break;
+
+                    }
+                });
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    boolean consumed = gestureDetector.onTouchEvent(event);
+
+                    if (!consumed) {
+                        // Si no se consumió el evento, permitir que el ScrollView lo maneje
+                        return false;
+                    } else {
+                        // Si se consumió el evento, retornar true para indicar que fue manejado
+                        return true;
+                    }
                 }
-                return false;
-            }
-        });
+            });
+            alertDialog1.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                @Override
+                public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_ENTER:
+                            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                                if (checkbloqueoestado_remoto == false && checkbloqueoanulacion_remoto == false) {
+                                    Toast.makeText(MainActivity.this, "Modificaciones Bloqueadas", Toast.LENGTH_SHORT);
+                                    return false;
+                                } else {
+                                    int id = lista2.get(selectedPosition);
+                                    int estado = Integer.parseInt(listaestado.get(selectedPosition));
+                                    String fecha = listafecha.get(selectedPosition);
+                                    String numero = listanumero.get(selectedPosition);
+                                    alertdialog(id, estado, numero, fecha);
+                                }
+
+                            }
+                            break;
+                        case 0:
+                            if (alertDialog1 != null && alertDialog1.isShowing()) {
+                                alertDialog1.dismiss();
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            });
+        }
         alertDialog1.setCanceledOnTouchOutside(true);
         alertDialog1.show();
     }
     private class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private List<String> data;
-
+        private int alturaElemento = GridLayoutManager.LayoutParams.WRAP_CONTENT;
         public MyAdapter(List<String> data) {
             this.data = data;
         }
@@ -1333,16 +1691,15 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_comandas, parent, false);
             GridLayoutManager.LayoutParams lp = (GridLayoutManager.LayoutParams) view.getLayoutParams();
 
-            float alto = TextSizeAdjuster.alto(MainActivity.this);
-            if (alto < 5.0) {
-                lp.height = parent.getMeasuredHeight();
-            } else if (alto >= 5.0 && alto < 10) {
-                lp.height = parent.getMeasuredHeight() / 2;
-            } else {
-                lp.height = parent.getMeasuredHeight() / 3;
-            }
+            filas = preferences.getInt("filas", 1);
+            lp.height = parent.getMeasuredHeight() / filas;
             view.setLayoutParams(lp);
             return new ViewHolder(view);
+        }
+
+        public void actualizarAlturaElemento(int nuevaAltura) {
+            alturaElemento = nuevaAltura;
+            notifyDataSetChanged(); // Notifica al adaptador que los datos han cambiado.
         }
 
         @Override
@@ -1354,10 +1711,16 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
             );
             //parametros.setMargins(5, 5, 5, 5);
             holder.textView.setLayoutParams(parametros);
+
+            filas = preferences.getInt("filas", 1);
+            ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
+            layoutParams.height = rv1.getMeasuredHeight() / filas; // Establece la altura dinámica aquí
+            holder.itemView.setLayoutParams(layoutParams);
+
             int color = 0;
             String estado = listaestado.get(position);
-            Log.e("COLOR-ESTADO: ",estado);
-            switch (estado){
+            //Log.e("COLOR-ESTADO: ",estado);
+            switch (estado) {
                 case "1":
                     color = colorpendientes_remoto;
                     Log.e("COLOR: PENDIENTES ", String.valueOf(color));
@@ -1378,13 +1741,12 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                     color=coloranuladas_remoto;
                     Log.e("COLOR: ANULADA ", String.valueOf(color));
                     break;
-
             }
 
 
             boolean modificado=listamodifica.get(position);
             if (layout_historico==false){
-                if (modificado==true){
+                if (modificado == true) {
                     holder.textViewmodificado.setVisibility(View.VISIBLE);
                     ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(holder.textViewmodificado, "alpha", 0.0f, 1.0f);
                     alphaAnimator.setDuration(1000); // Duración de un segundo
@@ -1393,19 +1755,24 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
 
                     // Inicia la animación
                     alphaAnimator.start();
-                }else {
+                } else {
                     holder.textViewmodificado.setVisibility(View.GONE);
                 }
                 holder.textViewmodificado.setBackgroundColor(Color.RED);
+            } else {
+                holder.textViewmodificado.setVisibility(View.GONE);
+
             }
+            ttexto_remoto = preferences.getInt("ttexto", 14);
             holder.textView.setTextColor(colortexto_remoto);
+            holder.textView.setTextSize(ttexto_remoto);
             holder.itemView.setBackgroundColor(color);
 
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
             params.setMargins(3, 3, 3, 3);
             holder.itemView.setLayoutParams(params);
             if (position == selectedPosition) {
-                holder.textView.setBackgroundResource(R.drawable.custom_border);
+                holder.textView.setBackgroundResource(R.drawable.custom_border_comanda);
                 //holder.textViewmodificado.setBackgroundResource(R.drawable.custom_border);
             } else {
                 holder.textView.setBackgroundResource(0);
@@ -1497,4 +1864,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
             }
         }
     }
+
+
 }
+
