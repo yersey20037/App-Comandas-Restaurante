@@ -2,8 +2,17 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/textviewmodificado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Modificado"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:gravity="center"/>
     <TextView
         android:id="@+id/textviewcomandas"
         android:layout_width="wrap_content"

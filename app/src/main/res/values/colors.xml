@@ -14,5 +14,5 @@
     <color name="colorError">#CC0000</color>
     <color name="colorTextPrimary">#212121</color>
     <color name="transparent">#00000000</color>
-
+    <color name="colorRed">#FF0000</color>
 </resources>

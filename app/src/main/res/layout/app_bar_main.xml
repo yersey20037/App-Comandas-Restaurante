@@ -18,8 +18,7 @@
         android:descendantFocusability="afterDescendants"
         android:focusableInTouchMode="true"
         android:orientation="horizontal"
-
-        app:layout_constraintBottom_toTopOf="@+id/estados"
+        app:layout_constraintBottom_toTopOf="@+id/estados_totales"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textcomandassiges">
@@ -54,7 +53,18 @@
         app:layout_constraintHorizontal_bias="1"
         app:srcCompat="@drawable/pngwing_com"
         />
-
+    <ImageButton
+        android:id="@+id/btnvistas"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
+        app:layout_constraintEnd_toStartOf="@id/btnreload"
+        app:layout_constraintStart_toStartOf="@id/textcomandassiges"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="1"
+        app:srcCompat="@drawable/evaluacion"
+        />
     <ImageButton
         android:id="@+id/btnconfig"
         android:layout_width="50dp"
@@ -80,7 +90,57 @@
         app:srcCompat="@drawable/painting"
         />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/estados_totales"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/empresa"
+        app:layout_constraintTop_toBottomOf="@+id/rv1">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/estados_historico"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+            <TextView
+                android:id="@+id/entregadas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#FF9900"
+                android:layout_marginStart="5dp"
+                android:text="ENTREGADA"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toStartOf="@id/anuladas"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
 
+            <TextView
+                android:id="@+id/anuladas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="#FFFF00"
+                android:text="ANULADA"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/entregadas"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+            </TextView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/estados"
         android:layout_width="0dp"
@@ -88,8 +148,8 @@
         android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/empresa"
-        app:layout_constraintTop_toBottomOf="@+id/rv1">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
         <TextView
             android:id="@+id/pendiente"
             android:layout_width="0dp"
@@ -140,6 +200,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             />
     </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
     <TextView
         android:id="@+id/empresa"
         android:layout_width="0dp"
@@ -156,6 +217,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/estados"
+        app:layout_constraintTop_toBottomOf="@id/estados_totales"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>

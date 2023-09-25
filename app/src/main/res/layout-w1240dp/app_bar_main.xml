@@ -18,8 +18,7 @@
         android:descendantFocusability="afterDescendants"
         android:focusableInTouchMode="true"
         android:orientation="horizontal"
-
-        app:layout_constraintBottom_toTopOf="@+id/estados"
+        app:layout_constraintBottom_toTopOf="@+id/estados_totales"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textcomandassiges">
@@ -42,32 +41,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/rv1"/>
     <ImageButton
-        android:id="@+id/btnreload"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:onClick="recargarconboton"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
-        app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
-        app:layout_constraintStart_toStartOf="@id/textcomandassiges"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintHorizontal_bias="1"
-        app:srcCompat="@drawable/pngwing_com"
-        />
-    <ImageButton
-        android:id="@+id/btncolor"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:onClick="recargarconboton"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
-        app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
-        app:layout_constraintStart_toEndOf="@id/btnconfig"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintHorizontal_bias="0"
-        app:srcCompat="@drawable/painting"
-        />
-    <ImageButton
         android:id="@+id/btnconfig"
         android:layout_width="80dp"
         android:layout_height="80dp"
@@ -78,68 +51,154 @@
         app:layout_constraintTop_toTopOf="@id/textcomandassiges"
         app:layout_constraintHorizontal_bias="0"
         app:srcCompat="@drawable/pngaaa_com_371772" />
+    <ImageButton
+        android:id="@+id/btncolor"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
+        app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
+        app:layout_constraintStart_toEndOf="@id/btnconfig"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="0"
+        app:srcCompat="@drawable/painting"
+        />
+    <ImageButton
+        android:id="@+id/btnreload"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
+        app:layout_constraintEnd_toEndOf="@id/textcomandassiges"
+        app:layout_constraintStart_toStartOf="@id/textcomandassiges"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintHorizontal_bias="1"
+        app:srcCompat="@drawable/pngwing_com"
+        />
 
-
-
+    <ImageButton
+        android:id="@+id/btnvistas"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="@id/textcomandassiges"
+        app:layout_constraintEnd_toStartOf="@id/btnreload"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textcomandassiges"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/evaluacion" />
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/estados"
-        android:layout_width="0dp"
+        android:id="@+id/estados_totales"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/empresa"
+        app:layout_constraintBottom_toTopOf="@+id/empresa"
         app:layout_constraintTop_toBottomOf="@+id/rv1">
-        <TextView
-            android:id="@+id/pendiente"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/estados_historico"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="#FF9900"
-            android:layout_marginStart="5dp"
-            android:text="PENDIENTE"
-            android:textAlignment="center"
-            android:textColor="#252850"
-            android:textSize="32sp"
-            app:layout_constraintEnd_toStartOf="@id/atencion"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-
-        <TextView
-            android:id="@+id/atencion"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:background="#FFFF00"
-            android:text="ATENCIÓN"
-            android:textAlignment="center"
-            android:textColor="#252850"
-            android:textSize="32sp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/entrega"
-            app:layout_constraintStart_toEndOf="@id/pendiente">
-
-        </TextView>
-
-        <TextView
-            android:id="@+id/entrega"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="5dp"
-            android:background="#00FF00"
-            android:text="POR ENTREGAR"
-            android:textAlignment="center"
-            android:textColor="#252850"
-            android:textSize="32sp"
+            android:layout_marginTop="5dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/atencion"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            />
+            app:layout_constraintTop_toTopOf="parent">
+            <TextView
+                android:id="@+id/entregadas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#FF9900"
+                android:layout_marginStart="5dp"
+                android:text="ENTREGADA"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="32sp"
+                app:layout_constraintEnd_toStartOf="@id/anuladas"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
+
+            <TextView
+                android:id="@+id/anuladas"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:background="#00FF00"
+                android:text="ANULADA"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="32sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/entregadas"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                >
+            </TextView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/estados"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            >
+            <TextView
+                android:id="@+id/pendiente"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#FF9900"
+                android:layout_marginStart="5dp"
+                android:text="PENDIENTE"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="32sp"
+                app:layout_constraintEnd_toStartOf="@id/atencion"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
+
+            <TextView
+                android:id="@+id/atencion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:background="#FFFF00"
+                android:text="ATENCIÓN"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="32sp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/entrega"
+                app:layout_constraintStart_toEndOf="@id/pendiente">
+
+            </TextView>
+
+            <TextView
+                android:id="@+id/entrega"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:background="#00FF00"
+                android:text="POR ENTREGAR"
+                android:textAlignment="center"
+                android:textColor="#252850"
+                android:textSize="32sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/atencion"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 
     <TextView
@@ -158,7 +217,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/estados"
+        app:layout_constraintTop_toBottomOf="@id/estados_totales"
         />
 
 
