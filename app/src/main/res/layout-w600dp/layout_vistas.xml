@@ -83,7 +83,32 @@
                     android:gravity="center_vertical"
                     android:text="POR ENTREGAR"
                     android:textSize="10sp"
-                    app:layout_constraintBottom_toTopOf="parent"></CheckBox>
+                    app:layout_constraintBottom_toTopOf="parent">
+
+                </CheckBox>
+                <CheckBox
+                    android:id="@+id/checkentregadas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:text="ENTREGADAS"
+                    android:textSize="10sp">
+
+                </CheckBox>
+                <CheckBox
+                    android:id="@+id/checkanuladas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:text="ANULADAS"
+                    android:textSize="10sp"
+                    app:layout_constraintBottom_toTopOf="parent">
+
+                </CheckBox>
             </LinearLayout>
         </LinearLayout>
 

@@ -84,10 +84,10 @@ public class MainActivity extends AppCompatActivity {
     Boolean checkpendiente_remoto;
     Boolean checkatencion_remoto;
     Boolean checkentregado_remoto;
+    Boolean checkentregadas_remoto;
+    Boolean checkanuladas_remoto;
     Boolean checkTI_remoto;
     Boolean checkDT_remoto;
-    Boolean checkentregada_remoto;
-    Boolean checkanulada_remoto;
     Boolean checkTI_remoto_historico;
     Boolean checkDT_remoto_historico;
 
@@ -126,6 +126,8 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox checkpendiente;
     private CheckBox checkatencion;
     private CheckBox checkentregado;
+    private CheckBox checkentregadas;
+    private CheckBox checkanuladas;
     private CheckBox checkTI;
     private CheckBox checkDT;
     private ConstraintLayout cl_estados;
@@ -221,6 +223,10 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnrecargar = findViewById(R.id.btnreload);
         btnrecargar.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean("checkTI",true);
+                editor.putBoolean("checkDT",true);
+                editor.commit();
                 if (layout_historico==false){
                     layout_historico=true;
                 }else{
@@ -242,6 +248,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnvistas = findViewById(R.id.btnvistas);
         btnvistas.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+
                 alertDialogVistas();
             }
         });
@@ -385,6 +392,8 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         checkpendiente_remoto=preferences.getBoolean("checkpendiente",false);
         checkatencion_remoto=preferences.getBoolean("checkatencion",false);
         checkentregado_remoto=preferences.getBoolean("checkentregado",false);
+        checkentregadas_remoto=preferences.getBoolean("checkentregadas",false);
+        checkanuladas_remoto=preferences.getBoolean("checkanuladas",false);
         checkDT_remoto=preferences.getBoolean("checkDT",false);
         checkTI_remoto=preferences.getBoolean("checkTI",false);
 
@@ -397,12 +406,16 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         checkpendiente = customLayout.findViewById(R.id.checkpendiente);
         checkatencion = customLayout.findViewById(R.id.checkatencion);
         checkentregado = customLayout.findViewById(R.id.checkentregado);
+        checkentregadas=customLayout.findViewById(R.id.checkentregadas);
+        checkanuladas=customLayout.findViewById(R.id.checkanuladas);
         checkTI=customLayout.findViewById(R.id.checkTI);
         checkDT=customLayout.findViewById(R.id.checkDT);
 
         checkpendiente.setChecked(checkpendiente_remoto);
         checkatencion.setChecked(checkatencion_remoto);
         checkentregado.setChecked(checkentregado_remoto);
+        checkentregadas.setChecked(checkentregadas_remoto);
+        checkanuladas.setChecked(checkanuladas_remoto);
         checkTI.setChecked(checkTI_remoto);
         checkDT.setChecked(checkDT_remoto);
 
@@ -413,12 +426,16 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 Boolean checkpendiente_local=checkpendiente.isChecked();
                 Boolean checkatencion_local=checkatencion.isChecked();
                 Boolean checkentregado_local=checkentregado.isChecked();
+                Boolean checkentregadas_local=checkentregadas.isChecked();
+                Boolean checkanuladas_local=checkanuladas.isChecked();
                 Boolean checkTI_local=checkTI.isChecked();
                 Boolean checkDT_local=checkDT.isChecked();
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putBoolean("checkpendiente",checkpendiente_local);
                 editor.putBoolean("checkatencion",checkatencion_local);
                 editor.putBoolean("checkentregado",checkentregado_local);
+                editor.putBoolean("checkentregadas",checkentregadas_local);
+                editor.putBoolean("checkanuladas",checkanuladas_local);
                 editor.putBoolean("checkTI",checkTI_local);
                 editor.putBoolean("checkDT",checkDT_local);
                 editor.commit();
@@ -428,14 +445,13 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                     consulta_historico();
                     cl_estados.setVisibility(View.GONE);
                     cl_estados_historicos.setVisibility(View.VISIBLE);
+
                 }else {
                     consulta();
                     cl_estados.setVisibility(View.VISIBLE);
                     cl_estados_historicos.setVisibility(View.GONE);
                 }
                 adapter.notifyDataSetChanged();
-
-
             }
         });
         customLayout.findViewById(R.id.buttonNovista).setOnClickListener(new View.OnClickListener() {
@@ -446,6 +462,19 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
         });
         if (alertDialogVistas.getWindow() != null) {
             alertDialogVistas.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        }
+        if (layout_historico==true){
+            checkentregadas.setVisibility(View.VISIBLE);
+            checkanuladas.setVisibility(View.VISIBLE);
+            checkpendiente.setVisibility(View.GONE);
+            checkatencion.setVisibility(View.GONE);
+            checkentregado.setVisibility(View.GONE);
+        }else {
+            checkentregadas.setVisibility(View.GONE);
+            checkanuladas.setVisibility(View.GONE);
+            checkpendiente.setVisibility(View.VISIBLE);
+            checkatencion.setVisibility(View.VISIBLE);
+            checkentregado.setVisibility(View.VISIBLE);
         }
         alertDialogVistas.show();
     }
@@ -606,8 +635,8 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
     }
     public void consulta_historico() {
 
-        checkentregada_remoto=preferences.getBoolean("checkentregada",true);
-        checkanulada_remoto=preferences.getBoolean("checkanulada",true);
+        checkentregadas_remoto=preferences.getBoolean("checkentregadas",true);
+        checkanuladas_remoto=preferences.getBoolean("checkanuladas",true);
         checkDT_remoto_historico=preferences.getBoolean("checkDT",true);
         checkTI_remoto_historico=preferences.getBoolean("checkTI",true);
         try {
@@ -616,10 +645,10 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                 String query = "SELECT * FROM Comandas_hist";
                 String queryorigen="";
                 List<String> condiciones = new ArrayList<>();
-                if (checkentregada_remoto.booleanValue()==true) {
+                if (checkentregadas_remoto.booleanValue()==true) {
                     condiciones.add("estado = '4'");
                 }
-                if (checkanulada_remoto.booleanValue()==true) {
+                if (checkanuladas_remoto.booleanValue()==true) {
                     condiciones.add("estado = 'X'");
                 }
                 if (checkTI_remoto_historico.booleanValue()==true && checkDT_remoto_historico.booleanValue()==true){
@@ -639,6 +668,7 @@ TextView textTitle_layout_color=customLayout.findViewById(R.id.textTitle_layout_
                     query +=queryorigen;
                 }
                 query += " ORDER BY  fecHora DESC";
+                Log.e("QHERY",query);
                 Statement statement = connect.createStatement();
                 ResultSet resultSet = statement.executeQuery(query);
                 List comandalist = new ArrayList();

@@ -85,6 +85,27 @@
                     android:textSize="30sp"
                     app:layout_constraintBottom_toTopOf="parent">
                 </CheckBox>
+                <CheckBox
+                    android:id="@+id/checkentregadas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:text="ENTREGADAS"
+                    android:textSize="30sp">
+                </CheckBox>
+                <CheckBox
+                    android:id="@+id/checkanuladas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
+                    android:text="ANULADAS"
+                    android:textSize="30sp"
+                    app:layout_constraintBottom_toTopOf="parent">
+                </CheckBox>
             </LinearLayout>
         </LinearLayout>
         <LinearLayout
