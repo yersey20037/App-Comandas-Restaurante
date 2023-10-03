@@ -19,9 +19,9 @@
             android:layout_height="wrap_content"
             android:background="@drawable/title__warning_background"
             android:padding="10dp"
-            android:text="Configure filtros"
+            android:text="Seleccionar vistas"
             android:textColor="@color/colorWhite"
-            android:textSize="15sp"
+            android:textSize="10sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@+id/Layoutestados"
             app:layout_constraintTop_toTopOf="parent"></TextView>
@@ -33,27 +33,26 @@
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             android:background="@drawable/custom_border"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/contenedorsegundafila"
+            app:layout_constraintBottom_toTopOf="@+id/Layoutorigen"
             app:layout_constraintTop_toBottomOf="@+id/textTitle">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Estados"
+                android:text="Estados a mostrar"
                 android:textAlignment="center"
-                android:textSize="15dp"
+                android:textSize="10dp"
                 android:textStyle="bold"></TextView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:orientation="horizontal"
-                >
+
+                android:orientation="horizontal">
 
                 <CheckBox
                     android:id="@+id/checkpendiente"
@@ -61,6 +60,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
                     android:text="PENDIENTE"
                     android:textSize="10sp"></CheckBox>
 
@@ -70,6 +70,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
                     android:text="ATENCIÓN"
                     android:textSize="10sp"></CheckBox>
 
@@ -79,150 +80,62 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawablePadding="8dp"
+                    android:gravity="center_vertical"
                     android:text="POR ENTREGAR"
                     android:textSize="10sp"
-                    ></CheckBox>
-
+                    app:layout_constraintBottom_toTopOf="parent"></CheckBox>
             </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/Layoutorigen"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="30dp"
+            android:background="@drawable/custom_border"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Layoutestados">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Origen a mostrar"
+                android:textAlignment="center"
+                android:textSize="10dp"
+                android:textStyle="bold"></TextView>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:orientation="horizontal"
-                >
+
+                android:orientation="horizontal">
 
                 <CheckBox
-                    android:id="@+id/checkentregadas"
+                    android:id="@+id/checkTI"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawablePadding="8dp"
-                    android:text="ENTREGADAS"
+                    android:gravity="center_vertical"
+                    android:text="TI"
                     android:textSize="10sp"></CheckBox>
 
                 <CheckBox
-                    android:id="@+id/checkanuladas"
+                    android:id="@+id/checkDT"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawablePadding="8dp"
-                    android:text="ANULADAS"
-                    android:textSize="10sp"
-                    ></CheckBox>
+                    android:gravity="center_vertical"
+                    android:text="DT"
+                    android:textSize="10sp"></CheckBox>
             </LinearLayout>
         </LinearLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/contenedorsegundafila"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="40dp"
-            app:layout_constraintTop_toBottomOf="@+id/Layoutestados">
-
-            <LinearLayout
-                android:id="@+id/Layoutorigen"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="5dp"
-                android:background="@drawable/custom_border"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/guidelineVertical"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Origen"
-                    android:textAlignment="center"
-                    android:textSize="10dp"
-                    android:textStyle="bold"></TextView>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:orientation="horizontal"
-                    >
-
-                    <CheckBox
-                        android:id="@+id/checkTI"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:drawablePadding="8dp"
-                        android:text="TI"
-                        android:textSize="10sp"></CheckBox>
-
-                    <CheckBox
-                        android:id="@+id/checkDT"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:drawablePadding="8dp"
-                        android:text="DT"
-                        android:textSize="10sp"></CheckBox>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/bloqueoestado"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="5dp"
-                android:background="@drawable/custom_border"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/guidelineVertical"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Modificaciones"
-                    android:textAlignment="center"
-                    android:textSize="10dp"
-                    android:textStyle="bold"></TextView>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:orientation="horizontal"
-                    >
-
-                    <CheckBox
-                        android:id="@+id/checkbloqueoestado"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="ESTADO"
-                        android:textSize="10sp"></CheckBox>
-                    <CheckBox
-                        android:id="@+id/checkbloqueoanulacion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="ANULACIÓN"
-                        android:textSize="10sp"></CheckBox>
-                </LinearLayout>
-            </LinearLayout>
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guidelineVertical"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_percent="0.5" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -230,14 +143,14 @@
     <Button
         android:id="@+id/buttonNovista"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="40dp"
         android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
+        android:layout_marginEnd="10dp"
         android:background="@drawable/button_warning_background"
-        android:text="Cancelar"
         android:textColor="@color/colorWhite"
-        android:textSize="10sp"
-
+        android:textSize="14sp"
+        android:text="Cancelar"
+        android:layout_margin="20dp"
         app:layout_constraintBottom_toBottomOf="@+id/layoutDialog2"
         app:layout_constraintEnd_toStartOf="@+id/buttonYesvista"
         app:layout_constraintStart_toStartOf="parent"
@@ -246,17 +159,16 @@
     <Button
         android:id="@+id/buttonYesvista"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="10dp"
         android:layout_marginEnd="40dp"
         android:background="@drawable/button_warning_background"
-        android:text="Guardar"
         android:textColor="@color/colorWhite"
-        android:textSize="10sp"
-
+        android:textSize="14sp"
+        android:text="Guardar"
+        android:layout_margin="20dp"
         app:layout_constraintBottom_toBottomOf="@+id/layoutDialog2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/buttonNovista"
         app:layout_constraintTop_toBottomOf="@+id/layoutDialog2" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
