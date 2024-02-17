@@ -130,7 +130,7 @@
             android:textColor="@color/colorTextPrimary"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@+id/edittextUser"
-            app:layout_constraintBottom_toBottomOf="@+id/edittextPassword"
+            app:layout_constraintBottom_toTopOf="@+id/edittextPassword"
              />
         <EditText
             android:id="@+id/edittextPassword"
@@ -147,19 +147,21 @@
             />
         <TextView
             android:id="@+id/textInstancia"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="5dp"
             android:layout_marginEnd="20dp"
             android:textColor="@color/colorTextPrimary"
             android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textTiempo"
             app:layout_constraintTop_toBottomOf="@+id/edittextPassword"
-            app:layout_constraintBottom_toBottomOf="@+id/edittextInstancia"
+            app:layout_constraintBottom_toTopOf="@+id/edittextInstancia"
             />
         <EditText
             android:id="@+id/edittextInstancia"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
@@ -167,8 +169,39 @@
             android:textColor="@color/colorTextPrimary"
             android:textSize="14sp"
             android:singleLine="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/edittextTiempo"
             app:layout_constraintTop_toBottomOf="@+id/textInstancia"
-            app:layout_constraintBottom_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <TextView
+            android:id="@+id/textTiempo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="20dp"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/textInstancia"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/edittextPassword"
+            app:layout_constraintBottom_toTopOf="@+id/edittextTiempo"
+            />
+        <EditText
+            android:id="@+id/edittextTiempo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="40dp"
+            android:textColor="@color/colorTextPrimary"
+            android:textSize="14sp"
+            android:singleLine="true"
+            app:layout_constraintStart_toEndOf="@+id/edittextInstancia"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textTiempo"
+            app:layout_constraintBottom_toBottomOf="parent"
             />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
